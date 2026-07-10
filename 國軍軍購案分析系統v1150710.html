@@ -30,6 +30,9 @@
   .alert { padding: 10px 14px; border-radius: 6px; font-size: 14px; }
   .alert-warning { background: #fff6e0; border: 1px solid #e8c766; color: #8a6100; }
   .alert-info { background: #e8f1fb; border: 1px solid #9dc0e8; color: #1f4e79; }
+  .alert-danger { background: #fdecec; border: 1px solid #e59a9a; color: #a11c1c; }
+  .alert-ok { background: #e9f6ea; border: 1px solid #9ccb9f; color: #226b28; }
+  .alert + .alert { margin-top: 8px; }
   .upload-area {
     border: 2px dashed #9dc0e8; border-radius: 8px; padding: 34px; text-align: center;
     cursor: pointer; color: #4a6076; transition: background .15s;
@@ -45,6 +48,22 @@
   td.num { text-align: right; font-variant-numeric: tabular-nums; }
   td.ctr { text-align: center; }
   .grp-row td { background: #dce6f1 !important; font-weight: bold; color: #1f4e79; }
+  /* 預覽區：欄位確認 */
+  th.col-letter { background: #163d5e; font-size: 12px; padding: 3px 10px; }
+  th.rowlab, td.rowlab {
+    background: #f0f4f9; color: #1f4e79; font-weight: bold; font-size: 12px;
+    text-align: center; position: sticky; left: 0; z-index: 2;
+  }
+  thead th.rowlab { background: #163d5e; color: #fff; z-index: 3; }
+  tr.file-header-row td {
+    background: #fff6e0 !important; font-weight: bold; color: #6b4e00;
+    white-space: normal; min-width: 90px;
+  }
+  tr.file-header-row td.rowlab { background: #ffe9b3 !important; color: #8a6100; }
+  tr.file-header-row td.mismatch { background: #fdd8d8 !important; color: #a11c1c; }
+  .legend { font-size: 12px; color: #6b7a90; margin: 8px 0 10px; }
+  .legend span { display: inline-block; margin-right: 16px; }
+  .swatch { display: inline-block; width: 12px; height: 12px; border: 1px solid #c8ceda; vertical-align: -2px; margin-right: 4px; }
   .btn {
     display: inline-block; border: none; border-radius: 6px; cursor: pointer;
     padding: 10px 22px; font-size: 15px; font-family: inherit;
@@ -104,7 +123,18 @@
     </div>
 
     <div class="section hidden" id="sec-preview">
-      <div class="section-title"><span class="step-badge">2</span>預覽完整資料</div>
+      <div class="section-title"><span class="step-badge">2</span>預覽完整資料｜確認欄位</div>
+      <div class="alert alert-warning">
+        ⚠️ <b>請先確認欄位是否正確再接續分析。</b>
+        下表第一列（黃底）為<b>上傳檔案的原始表頭</b>，請與表頭區的「系統預設欄位」逐欄核對。
+        若國防部來函資料調換過欄位順序，分析結果將完全錯誤。
+      </div>
+      <div id="preview-check"></div>
+      <div class="legend">
+        <span><i class="swatch" style="background:#1f4e79;"></i>系統預設欄位（分析所依據）</span>
+        <span><i class="swatch" style="background:#fff6e0;"></i>上傳檔案表頭</span>
+        <span><i class="swatch" style="background:#fdd8d8;"></i>與預設不符</span>
+      </div>
       <div class="count-line" id="preview-count"></div>
       <div class="table-wrap" id="preview-wrap"></div>
     </div>
@@ -279,6 +309,7 @@ var CONTROL_POINTS = [
 
 /* ========== 全域狀態 ========== */
 var dataRows = null;          // 上傳的資料列（不含標題）
+var rawHeader = null;         // 上傳檔案的原始第一列（表頭），供欄位核對用
 var results = null;           // { '1-1': [outRow, ...], ... }
 var counts = null;            // { '1-1': {陸軍,海軍,空軍,其他}, ... }
 
@@ -332,6 +363,22 @@ function getCP(id) {
     if (CONTROL_POINTS[i].id === id) return CONTROL_POINTS[i];
   return null;
 }
+// 0→A, 25→Z, 26→AA
+function colLetter(n) {
+  var s = '', x = n + 1;
+  while (x > 0) { var m = (x - 1) % 26; s = String.fromCharCode(65 + m) + s; x = Math.floor((x - 1) / 26); }
+  return s;
+}
+// 比對欄位名稱時忽略所有空白與換行
+function normHeader(s) { return String(s === undefined || s === null ? '' : s).replace(/\s+/g, ''); }
+// 回傳與系統預設不符的欄索引陣列
+function headerMismatches() {
+  var bad = [];
+  if (!rawHeader) return bad;
+  for (var i = 0; i < IN_COLS; i++)
+    if (normHeader(rawHeader[i]) !== normHeader(IN_HEADERS[i])) bad.push(i);
+  return bad;
+}
 
 /* ========== 檔案上傳與解析 ========== */
 var uploadArea = document.getElementById('upload-area');
@@ -366,6 +413,7 @@ function parseWorkbook(arrayBuffer, fileName) {
     alert('欄位不足 ' + IN_COLS + ' 欄（僅偵測到 ' + header.length + ' 欄）。\n請確認：\n1. 已刪除文件標題列，第一列即為欄位名稱\n2. 已包含「待平衡支付值」欄（P欄）');
     return;
   }
+  rawHeader = header;
   dataRows = rows.slice(1).filter(function (r) {
     return r.some(function (c) { return c !== '' && c !== null && c !== undefined; });
   });
@@ -378,26 +426,70 @@ function parseWorkbook(arrayBuffer, fileName) {
   document.getElementById('sec-summary').classList.add('hidden');
 }
 
-/* ========== 預覽 ========== */
+/* ========== 預覽（含欄位核對） ========== */
+var RATIO_IN = [9, 11];                     // 輸入列中的比率欄
+var MONEY_IN = [7, 8, 10, 12, 13, 14, 15];  // 輸入列中的金額欄
+
 function renderPreview() {
-  var html = '<table><thead><tr>';
-  for (var i = 0; i < IN_COLS; i++) html += '<th>' + esc(IN_HEADERS[i]).replace(/\n/g, '<br>') + '</th>';
+  var nCols = Math.max(IN_COLS, rawHeader.length);
+  var bad = headerMismatches();
+  var i, c, r;
+
+  // --- 核對結果訊息 ---
+  var msg = '';
+  if (bad.length) {
+    var names = [];
+    for (i = 0; i < bad.length; i++) {
+      names.push(colLetter(bad[i]) + ' 欄（預設「' +
+        esc(String(IN_HEADERS[bad[i]]).replace(/\s+/g, ' ')) + '」，實際「' +
+        esc(String(rawHeader[bad[i]] === undefined ? '(空白)' : rawHeader[bad[i]]).replace(/\s+/g, ' ')) + '」）');
+    }
+    msg += '<div class="alert alert-danger">🛑 <b>偵測到 ' + bad.length +
+      ' 個欄位與系統預設不符</b>，分析結果可能完全錯誤，請確認欄位順序是否遭調換：<br>' +
+      names.join('<br>') + '</div>';
+  } else {
+    msg += '<div class="alert alert-ok">✓ 上傳檔案的 ' + IN_COLS +
+      ' 個欄位名稱與系統預設完全相符（比對時忽略空白與換行）。</div>';
+  }
+  if (rawHeader.length > IN_COLS) {
+    msg += '<div class="alert alert-warning">ℹ️ 檔案另有 ' + (rawHeader.length - IN_COLS) +
+      ' 個多餘欄位（' + colLetter(IN_COLS) + ' 欄以後），分析時將予以忽略。</div>';
+  }
+  document.getElementById('preview-check').innerHTML = msg;
+
+  // --- 表格：thead = Excel 欄號 + 系統預設欄位；tbody 首列 = 上傳檔案表頭 ---
+  var html = '<table><thead>';
+  html += '<tr><th class="rowlab">Excel 欄</th>';
+  for (i = 0; i < nCols; i++) html += '<th class="col-letter">' + colLetter(i) + '</th>';
+  html += '</tr><tr><th class="rowlab">系統預設欄位</th>';
+  for (i = 0; i < nCols; i++) {
+    html += '<th>' + (i < IN_COLS ? esc(IN_HEADERS[i]).replace(/\n/g, '<br>') : '<i>（多餘欄位）</i>') + '</th>';
+  }
   html += '</tr></thead><tbody>';
-  for (var r = 0; r < dataRows.length; r++) {
+
+  html += '<tr class="file-header-row"><td class="rowlab">上傳檔案表頭</td>';
+  for (i = 0; i < nCols; i++) {
+    var isBad = bad.indexOf(i) >= 0;
+    html += '<td' + (isBad ? ' class="mismatch"' : '') + '>' +
+      esc(rawHeader[i]).replace(/\n/g, '<br>') + '</td>';
+  }
+  html += '</tr>';
+
+  for (r = 0; r < dataRows.length; r++) {
     var row = dataRows[r];
-    html += '<tr>';
-    for (var c = 0; c < IN_COLS; c++) {
+    html += '<tr><td class="rowlab">' + (r + 1) + '</td>';
+    for (c = 0; c < nCols; c++) {
       var v = row[c];
-      if (c === 9 || c === 11) html += '<td class="num">' + esc(fmtRatio(v)) + '</td>';
-      else if (c === 7 || c === 8 || c === 10 || c === 12 || c === 13 || c === 14 || c === 15)
-        html += '<td class="num">' + esc(fmtMoney(v)) + '</td>';
+      if (RATIO_IN.indexOf(c) >= 0) html += '<td class="num">' + esc(fmtRatio(v)) + '</td>';
+      else if (MONEY_IN.indexOf(c) >= 0) html += '<td class="num">' + esc(fmtMoney(v)) + '</td>';
       else html += '<td>' + esc(v) + '</td>';
     }
     html += '</tr>';
   }
   html += '</tbody></table>';
   document.getElementById('preview-wrap').innerHTML = html;
-  document.getElementById('preview-count').textContent = '共 ' + dataRows.length + ' 筆、' + IN_COLS + ' 個欄位';
+  document.getElementById('preview-count').textContent =
+    '共 ' + dataRows.length + ' 筆資料、' + rawHeader.length + ' 個欄位（系統分析使用前 ' + IN_COLS + ' 欄）';
 }
 
 /* ========== 閾值面板 ========== */
@@ -459,6 +551,16 @@ function buildOutRow(cp, row, v) {
 
 function runAnalysis() {
   if (!dataRows) { alert('請先上傳檔案'); return; }
+  var bad = headerMismatches();
+  if (bad.length) {
+    var lines = [];
+    for (var b = 0; b < bad.length; b++) {
+      lines.push('  ' + colLetter(bad[b]) + ' 欄：預設「' + String(IN_HEADERS[bad[b]]).replace(/\s+/g, ' ') +
+        '」，實際「' + String(rawHeader[bad[b]] === undefined ? '(空白)' : rawHeader[bad[b]]).replace(/\s+/g, ' ') + '」');
+    }
+    if (!confirm('偵測到 ' + bad.length + ' 個欄位與系統預設不符：\n\n' + lines.join('\n') +
+      '\n\n系統仍會依「欄位位置」進行分析，若欄位順序遭調換，結果將完全錯誤。\n確定要繼續分析嗎？')) return;
+  }
   var p = readParams();
   results = {}; counts = {};
   var i, cp;
