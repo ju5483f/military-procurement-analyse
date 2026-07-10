@@ -12,3 +12,4 @@ desktop.ini
 
 # Claude Code 的機器本地設定（不跨機器共用）
 .claude/settings.local.json
+.claude/launch.json
