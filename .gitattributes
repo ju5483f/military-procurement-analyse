@@ -1,0 +1,6 @@
+# 交付成品：不做任何換行轉換，確保跨機器 checkout 的檔案位元組完全一致
+國軍軍購案分析系統.html -text
+
+# 文字檔統一以 LF 存進儲存庫，checkout 時依平台還原
+*.md text=auto
+*.gitignore text=auto

@@ -1,0 +1,14 @@
+# Microsoft Office 開啟檔案時產生的鎖定／暫存檔
+~$*
+
+# Windows / macOS 系統檔
+Thumbs.db
+desktop.ini
+.DS_Store
+
+# 開發過程的暫存產出
+*.tmp
+/scratch/
+
+# Claude Code 的機器本地設定（不跨機器共用）
+.claude/settings.local.json
