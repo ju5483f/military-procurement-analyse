@@ -1,0 +1,286 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="UTF-8">
+<title>國軍軍購案分析系統 使用說明</title>
+<style>
+  :root{
+    --ink:#1a1a1a; --sub:#444; --line:#c9c9c9; --navy:#163d5e; --navy2:#1f4e79;
+    --band:#eef3f8; --band2:#f6f8fb; --warn:#b23b2e; --warnbg:#fbeeec;
+  }
+  *{box-sizing:border-box;}
+  html,body{margin:0;padding:0;}
+  body{
+    font-family:"Microsoft JhengHei","PingFang TC","Noto Sans TC",sans-serif;
+    color:var(--ink); font-size:10.1pt; line-height:1.4; background:#fff;
+  }
+  /* A4 直向排版，四頁以內 */
+  .page{
+    width:210mm; min-height:297mm; padding:13mm 15mm 12mm 15mm;
+    margin:0 auto; background:#fff; position:relative;
+  }
+  @media screen{
+    body{background:#e9ecef;}
+    .page{margin:10mm auto; box-shadow:0 1px 8px rgba(0,0,0,.18);}
+  }
+  @page{ size:A4 portrait; margin:0; }
+  @media print{
+    body{background:#fff;}
+    .page{margin:0; box-shadow:none; page-break-after:always;}
+    .page:last-child{page-break-after:auto;}
+  }
+
+  h1.doc{
+    font-size:18pt; color:var(--navy); margin:0 0 2mm 0; letter-spacing:1px;
+    border-bottom:2.5pt solid var(--navy); padding-bottom:2mm;
+  }
+  .doc-sub{color:var(--sub); font-size:9.4pt; margin:0 0 5mm 0;}
+  h2{
+    font-size:12pt; color:#fff; background:var(--navy); margin:3.8mm 0 2mm 0;
+    padding:1.4mm 3mm; border-radius:1mm;
+  }
+  h3{
+    font-size:10.6pt; color:var(--navy2); margin:2.8mm 0 1.2mm 0;
+    padding-left:2.5mm; border-left:3.5pt solid var(--navy2);
+  }
+  p{margin:1mm 0;}
+  ul,ol{margin:.8mm 0 1.2mm 0; padding-left:6mm;}
+  li{margin:.4mm 0;}
+  .lead{color:var(--sub);}
+  b,strong{color:#000;}
+  code{
+    font-family:Consolas,"Courier New",monospace; background:var(--band);
+    padding:0 1mm; border-radius:.8mm; font-size:9.2pt; color:#0b3d2e;
+  }
+  table{border-collapse:collapse; width:100%; margin:1.2mm 0 1.6mm 0; font-size:9pt;}
+  th,td{border:.6pt solid var(--line); padding:.85mm 1.6mm; vertical-align:top;}
+  th{background:var(--navy2); color:#fff; text-align:left; font-weight:600;}
+  tbody tr:nth-child(even){background:var(--band2);}
+  td.c{text-align:center;} td.n{white-space:nowrap; text-align:center; font-weight:600; color:var(--navy2);}
+  .note{
+    background:var(--band); border-left:3.5pt solid var(--navy2);
+    padding:1.6mm 3mm; margin:1.8mm 0; border-radius:0 1mm 1mm 0;
+  }
+  .warn{
+    background:var(--warnbg); border-left:3.5pt solid var(--warn);
+    padding:1.6mm 3mm; margin:1.8mm 0; border-radius:0 1mm 1mm 0;
+  }
+  .warn b{color:var(--warn);}
+  .steps{counter-reset:step; margin:1mm 0;}
+  .foot{
+    position:absolute; bottom:7mm; left:16mm; right:16mm;
+    border-top:.6pt solid var(--line); padding-top:1.5mm;
+    font-size:8pt; color:#888; display:flex; justify-content:space-between;
+  }
+  .two{display:flex; gap:5mm;}
+  .two>div{flex:1;}
+  .kbd{display:inline-block; background:#fff; border:.7pt solid #999; border-bottom-width:1.6pt;
+    border-radius:1mm; padding:0 1.6mm; font-size:8.6pt; color:#333;}
+  .tag{display:inline-block; background:var(--navy); color:#fff; font-size:8.4pt;
+    padding:.3mm 1.6mm; border-radius:1mm; margin-right:1mm;}
+  hr.soft{border:0; border-top:.6pt dashed var(--line); margin:2.5mm 0;}
+</style>
+</head>
+<body>
+
+<!-- ============ 第 1 頁 ============ -->
+<section class="page">
+  <h1 class="doc">國軍軍購案分析系統　使用說明</h1>
+  <p class="doc-sub">單一自足 HTML 離線分析工具　│　適用版本 v1150715（20 項控制點）　│　中華民國 115 年 7 月編製</p>
+
+  <h2>壹、前言</h2>
+
+  <h3>一、緣起</h3>
+  <p class="lead">國防部主計局每半年檢送一份「執行中軍購案個案管制表」（對美軍售 FMS 案件），需逐案以 Excel 人工套用多項分析條件（控制點），篩選履約或帳務異常之風險案件，作業繁瑣且易漏。本系統將該人工流程自動化，一次帶出全部控制點之篩選結果。</p>
+
+  <h3>二、系統目標</h3>
+  <ul>
+    <li>以單一程式，自動套用 <b>20 項控制點</b>（軍事投資 10 項＋作業維持 10 項），產出風險案件分析總表與明細。</li>
+    <li>提供第二階段功能，將分析結果與<b>軍購管制會會議紀錄</b>自動核對，標示已檢討案件。</li>
+    <li>各項篩選門檻皆可於畫面調整，並可將結果匯出為 xlsx 供陳報與存查。</li>
+  </ul>
+
+  <h3>三、系統特色與執行環境</h3>
+  <div class="note">
+    <p style="margin-top:0"><b>■ 實體隔離、不連網運作。</b>目標環境為機密區之實體隔離電腦（無網際網路），以 <b>Microsoft Edge</b> 開啟本檔即可使用。</p>
+    <p><b>■ 單一自足檔案。</b>全系統為一個 HTML 檔，Excel 解析元件（SheetJS）已內嵌其中，<b>不需安裝、不需上網、不上傳任何資料至伺服器</b>，所有運算均在本機瀏覽器內完成。</p>
+    <p style="margin-bottom:0"><b>■ 資料不外洩。</b>上傳之管制表僅於記憶體中處理，關閉瀏覽器即清除。</p>
+  </div>
+
+  <h3>四、手冊目的</h3>
+  <p class="lead">供承辦人員操作本系統之參考，說明資料整理、操作步驟、控制點意涵及注意事項。</p>
+
+  <h2>貳、使用前準備</h2>
+  <p>本系統依「<b>欄位位置</b>」而非欄位名稱讀取資料，故上傳前請先於 Excel 完成下列整理，避免分析錯誤：</p>
+  <ol>
+    <li><b>刪除文件標題列。</b>使檔案第一列即為欄位名稱列（項次、案號、軍種……），資料自第二列起。</li>
+    <li><b>刪除表尾「合計／總計」列。</b>避免合計數被誤當成一筆案件納入統計。</li>
+    <li><b>確認欄位順序為 A~P。</b>對應如下表；系統以此固定位置讀取，切勿任意增刪或調換欄序。</li>
+  </ol>
+
+  <table>
+    <thead><tr>
+      <th style="width:7%" class="c">欄</th><th>欄位內容</th>
+      <th style="width:7%" class="c">欄</th><th>欄位內容</th>
+    </tr></thead>
+    <tbody>
+      <tr><td class="c">A~G</td><td>項次、案號、軍種、單位、案名、<b>類別</b>、預算科目</td><td class="c">L</td><td>累計交運率 (E)=(D)/(B)</td></tr>
+      <tr><td class="c">H</td><td>發價值 (A) 美元</td><td class="c">M</td><td>軍購備查帳 (F)=(B)−(D) 美元</td></tr>
+      <tr><td class="c">I</td><td>累積結匯值 (B) 美元</td><td class="c">N</td><td>軍購備查帳 (F) 新臺幣元</td></tr>
+      <tr><td class="c">J</td><td>累計結匯率 (C)=(B)/(A)</td><td class="c">O</td><td>FRB 餘額</td></tr>
+      <tr><td class="c">K</td><td>累積交運值 (D) 美元</td><td class="c">P</td><td>待平衡支付值 美元（&gt;0 即欠款）</td></tr>
+    </tbody>
+  </table>
+  <p class="lead" style="font-size:9pt"><b>類別欄（F）</b>值為 <code>軍投</code>／<code>作維</code>／<code>特別預算</code>；其中<b>「特別預算」併入「軍投」類</b>套用軍事投資控制點。</p>
+
+  <div class="foot"><span>國軍軍購案分析系統　使用說明</span><span>第 1 頁　共 4 頁</span></div>
+</section>
+
+<!-- ============ 第 2 頁 ============ -->
+<section class="page">
+  <h2>參、操作步驟</h2>
+  <p class="lead">系統畫面採由上而下之四步驟流程，另含選用之第二階段核對。</p>
+
+  <h3>步驟一　上傳執行中管制表</h3>
+  <p>點選<span class="kbd">上傳 .xlsx 檔案</span>，選取整理後之「執行中軍購案個案管制表」。上傳後系統立即解析並帶出下方預覽。頁首警語會再次提醒須先刪除標題列與合計列。</p>
+
+  <h3>步驟二　預覽完整資料｜確認欄位（欄位錯位防呆）</h3>
+  <p>系統完整列出上傳內容供核對。由於程式依欄位位置讀取，若國防部調換欄序將造成<b>靜默的錯誤分析</b>，故本區設計雙列對照：</p>
+  <ul>
+    <li>表頭區顯示系統預設之 <b>Excel 欄號</b> 與 <b>系統預設欄位名稱</b>。</li>
+    <li>表身第一列（黃底）顯示<b>上傳檔案的原始表頭</b>，供逐欄比對。</li>
+    <li>兩者不符之欄位會<b style="color:var(--warn)">標紅</b>並跳出紅色警示；此時請返回 Excel 修正欄序後重新上傳。</li>
+  </ul>
+  <div class="warn" style="font-size:9.2pt"><b>合計列防呆：</b>若偵測到最末一筆之 A~G 欄含「合計／總計」字樣，預覽區會紅字警示。系統<b>不會自動刪除</b>，執行分析時將再以確認視窗（<span class="kbd">確定／取消</span>）提醒，請確認無誤再繼續。</div>
+
+  <h3>步驟三　分析條件設定</h3>
+  <p>本區以「軍投／作維」兩個可摺疊面板呈現，<b>全部 24 個門檻參數皆可調整</b>（金額單位：美元）。系統已預帶標準門檻，一般情形<b>直接使用預設值即可</b>，無須逐項填寫。</p>
+  <div class="note" style="font-size:9.2pt; margin:2mm 0">成對出現的控制點（如軍投 1-3／1-4、1-7／1-8）<b>共用同一組門檻輸入框</b>，維持互斥分割，改一處即同步生效。門檻意涵請見「肆、控制點說明」，<b>調整前務必理解該門檻設計邏輯，勿逕行改為軍投作維一致</b>。</div>
+  <p>設定完成後點選<span class="kbd">執行分析</span>（或<span class="kbd">執行第一階段分析</span>）。系統依「類別」欄分流：<code>作維</code>套作維 10 項；<code>軍投</code>＋<code>特別預算</code>套軍投 10 項，並產出分析總表。</p>
+
+  <h3>步驟四　分析總表</h3>
+  <p>總表以 20 列（各控制點一列）呈現，欄位如下：</p>
+  <table>
+    <thead><tr><th>欄位</th><th>說明</th></tr></thead>
+    <tbody>
+      <tr><td class="n">編號／名稱</td><td>控制點編號（如軍投 1-3）與名稱</td></tr>
+      <tr><td class="n">陸／海／空／其他</td><td>命中案件依軍種計數；恰為陸軍／海軍／空軍者各自計數，其餘（中央、多軍種統建等）歸「其他」</td></tr>
+      <tr><td class="n">合計</td><td>四軍種之和，即該控制點命中之案件筆數</td></tr>
+      <tr><td class="n">第二階段</td><td>是否已於會議紀錄檢討（完成第二階段核對後顯示）</td></tr>
+      <tr><td class="n">明細表</td><td>點選可切換至該控制點之明細頁；命中 0 案時按鈕停用</td></tr>
+    </tbody>
+  </table>
+  <p class="lead" style="font-size:9pt">一筆案件若同時符合多個控制點，會於各該控制點<b>各列一筆</b>（不合併）。切換明細頁後可按<span class="kbd">← 上一頁</span>返回，狀態保留於記憶體，不需重新分析。</p>
+
+  <h3>匯出結果（xlsx）</h3>
+  <p>可輸出三種檔案，檔名日期為當日 <code>YYYYMMDD</code>：</p>
+  <table>
+    <thead><tr><th style="width:34%">按鈕</th><th>輸出內容</th></tr></thead>
+    <tbody>
+      <tr><td>下載分析總表</td><td><code>{日期}軍購案分析總表.xlsx</code>　9 欄×20 列（含「種類」欄）</td></tr>
+      <tr><td>下載全部分析結果明細表</td><td><code>{日期}全部分析結果明細表.xlsx</code>　全部命中案件堆疊於單一工作表</td></tr>
+      <tr><td>下載明細表（各控制點頁）</td><td><code>{日期}{類別}{編號}{名稱}.xlsx</code>　首列為控制點標題，便於列印辨識</td></tr>
+    </tbody>
+  </table>
+
+  <div class="foot"><span>國軍軍購案分析系統　使用說明</span><span>第 2 頁　共 4 頁</span></div>
+</section>
+
+<!-- ============ 第 3 頁 ============ -->
+<section class="page">
+  <h3 style="margin-top:0">步驟五（選用）　第二階段：會議紀錄核對</h3>
+  <p>第一階段分析完成後顯示第二階段區塊，用以將分析結果與軍購管制會會議紀錄比對，標示已檢討之案件。</p>
+  <ul>
+    <li><b>上傳格式：</b>會議資料整理檔，第一列為表頭，A~D 欄為「檢討態樣／案號／案名／說明或辦理情形」；可同時上傳多檔、亦可逐一移除。</li>
+    <li><b>核對規則：</b>以第一階段結果之「案號」精確比對（自動去空白、轉大寫）；命中者於明細列末補上「檢討態樣」與「說明或辦理情形」兩欄。</li>
+    <li><b>多筆合併：</b>同一案號有多筆會議紀錄時，於單一儲存格內以「1.…／2.…」編號合併；完全相同者去重。</li>
+    <li><b>總表對應：</b>總表「第二階段」欄顯示 <code>有出現（N件）</code>；未核對者留白。</li>
+    <li><b>重新分析：</b>會議檔留存於記憶體，重跑第一階段會自動重新核對；移除全部會議檔即回復為未核對狀態。</li>
+  </ul>
+  <div class="note" style="font-size:9pt; margin:2mm 0">既知限制：xlsx 儲存格內的換行，需在 Excel 開啟「自動換行」才會顯示多行（免費版元件無法寫入儲存格樣式）。</div>
+
+  <h2>肆、控制點說明</h2>
+  <p class="lead" style="font-size:9.3pt">金額門檻單位皆為<b>美元</b>；差異一律取<b>絕對值</b> <code>|K/H − J|</code>；所有比率運算均已防範除以零。符號對應：H 發價值、I 結匯值、J 結匯率、K 交運值、L 交運率、M 備查帳(在途物資)、O FRB 餘額、P 待平衡支付值。</p>
+
+  <h3>一、軍事投資建案（軍投，含特別預算）── 10 項</h3>
+  <table>
+    <thead><tr><th style="width:12%" class="c">編號</th><th style="width:52%">篩選條件</th><th>風險意涵</th></tr></thead>
+    <tbody>
+      <tr><td class="n">軍投 1-1</td><td>交運值為 0（<code>K == 0</code>）</td><td>完全未交貨</td></tr>
+      <tr><td class="n">軍投 1-2</td><td>累計交運率未達 50%，不含 0（<code>0 &lt; L &lt; 0.5</code>）</td><td>交貨落後</td></tr>
+      <tr><td class="n">軍投 1-3</td><td><code>|K/H − J| ≥ 0.4</code></td><td>交運進度落後付款進度</td></tr>
+      <tr><td class="n">軍投 1-4</td><td><code>|K/H − J| &lt; 0.4</code> 且 <code>M ≥ 3,000 萬</code></td><td>在途物資（滯美資金）重大</td></tr>
+      <tr><td class="n">軍投 1-5</td><td><code>K/(I−O) &lt; 0.1</code> 且 <code>|K − (I−O)| &gt; 1 億</code></td><td>提領未交，履約異常（風險最高）</td></tr>
+      <tr><td class="n">軍投 1-6</td><td>結匯率超過 100%（<code>J &gt; 1</code>）</td><td>溢付、帳務異常</td></tr>
+      <tr><td class="n">軍投 1-7</td><td><code>O/I ≥ 0.4</code></td><td>結匯滯留，款項閒置於 FRB</td></tr>
+      <tr><td class="n">軍投 1-8</td><td><code>O/I &lt; 0.4</code> 且 <code>O ≥ 3,000 萬</code></td><td>FRB 餘額金額重大</td></tr>
+      <tr><td class="n">軍投 1-9</td><td>待平衡支付值 <code>&gt; 0</code></td><td>我方欠款案件</td></tr>
+      <tr><td class="n">軍投 1-10</td><td><code>J ≥ 0.9</code> 且 <code>L &lt; 0.5</code></td><td>結匯近全額而交運未過半</td></tr>
+    </tbody>
+  </table>
+
+  <h3>二、作業維持案（作維）── 10 項</h3>
+  <table>
+    <thead><tr><th style="width:12%" class="c">編號</th><th style="width:58%">篩選條件</th><th>風險意涵</th></tr></thead>
+    <tbody>
+      <tr><td class="n">作維 2-1</td><td><code>K == 0</code> 且 <code>I ≥ 300 萬</code></td><td>未交貨（排除小額）</td></tr>
+      <tr><td class="n">作維 2-2</td><td><code>0 &lt; L &lt; 0.5</code> 且 <code>M ≥ 3,000 萬</code></td><td>交貨落後且在途重大</td></tr>
+      <tr><td class="n">作維 2-3</td><td><code>|K/H − J| ≥ 0.5</code> 且 <code>M ≥ 300 萬</code></td><td>進度落差異常</td></tr>
+      <tr><td class="n">作維 2-4</td><td><code>|K/H − J| &lt; 0.5</code> 且 <code>M ≥ 3,000 萬</code></td><td>在途物資重大</td></tr>
+      <tr><td class="n">作維 2-5</td><td><code>K/(I−O) &lt; 0.1</code> 且 <code>|K − (I−O)| &gt; 1,000 萬</code></td><td>提領未交，履約異常</td></tr>
+      <tr><td class="n">作維 2-6</td><td>結匯率超過 100%（<code>J &gt; 1</code>）</td><td>溢付、帳務異常</td></tr>
+      <tr><td class="n">作維 2-7</td><td><code>O/I ≥ 0.5</code> 且 <code>O ≥ 300 萬</code></td><td>結匯滯留於 FRB</td></tr>
+      <tr><td class="n">作維 2-8</td><td><code>O/I &lt; 0.5</code> 且 <code>O ≥ 1,000 萬</code></td><td>FRB 餘額金額重大</td></tr>
+      <tr><td class="n">作維 2-9</td><td>待平衡支付值 <code>&gt; 0</code></td><td>欠款案件</td></tr>
+      <tr><td class="n">作維 2-10</td><td><code>J ≥ 0.9</code> 且 <code>L &lt; 0.5</code></td><td>結匯近全額而交運未過半</td></tr>
+    </tbody>
+  </table>
+
+  <div class="foot"><span>國軍軍購案分析系統　使用說明</span><span>第 3 頁　共 4 頁</span></div>
+</section>
+
+<!-- ============ 第 4 頁 ============ -->
+<section class="page">
+  <h2>伍、控制點的設計邏輯（門檻調整前必讀）</h2>
+  <p>控制點沿著 FMS「錢的旅程」設計。FMS 採先付款後交貨：我方依發價書與美軍季帳單<b>先結匯付款</b>，款項存入美國聯邦儲備銀行紐約分行之計息帳戶（<b>FRB</b>），美方按未來實需自 FRB 提領支付合約商，交貨後於季帳單列計交運值，我方驗收後沖銷在途物資。</p>
+  <div class="note" style="margin:2mm 0">
+    <p style="margin:0"><b>軍購備查帳餘額 M＝結匯−交運＝在途物資</b>，即「已付款、未交貨、滯存美方」之金額，為審計檢討之核心焦點。</p>
+  </div>
+  <p>各控制點對應「錢的旅程」上的一個風險節點：</p>
+  <ul>
+    <li><b>結匯滯留</b>（1-7／1-8）— 款項匯出後大量閒置於 FRB，付款超前美方實需。</li>
+    <li><b>提領未交</b>（1-5）— <code>I−O</code> ≒ 美方已自 FRB 提領動支之金額，交運不及其一成即履約異常，風險最高。</li>
+    <li><b>交貨落後</b>（1-2／1-3／1-4、1-10）— 交運進度落後付款進度，在途物資偏高。</li>
+    <li><b>例外態樣</b> — 結匯率&gt;100%（1-6 溢付）、待平衡支付值&gt;0（1-9 欠款）。</li>
+  </ul>
+
+  <div class="warn">
+    <p style="margin-top:0"><b>三項關鍵慣例，調整門檻前務必理解：</b></p>
+    <p><b>1. 比率＋金額雙保險。</b>成對控制點（如 1-3／1-4、1-7／1-8）並非重複：比率負責抓異常型態，絕對金額門檻負責抓滯美資金重大之大案，互補防漏。</p>
+    <p><b>2. 軍投 40% 與作維 50% 的門檻差異是刻意的。</b>作維類（開放式軍購、CLSSA 訂單）結匯先行、分批交運、常無實際交運品項，落差屬常態，故門檻放寬並加金額門檻以排除小額噪音，<b>不要順手改成一致</b>。</p>
+    <p style="margin-bottom:0"><b>3. 1-10／2-10（結匯率≥90% 且交運率&lt;50%）</b>為審計實務常用之複合篩選，與 1-2、1-6 部分重疊屬正常，各對應不同檢討態樣，不應合併。</p>
+  </div>
+
+  <h2>陸、注意事項與常見問題</h2>
+  <table>
+    <thead><tr><th style="width:34%">情形</th><th>處理方式</th></tr></thead>
+    <tbody>
+      <tr><td>預覽區欄位標紅、跳出紅色警示</td><td>上傳檔案欄序與系統預設不符。返回 Excel 依 A~P 順序調整欄位後重新上傳，勿逕行按確定分析。</td></tr>
+      <tr><td>警示提醒疑似「合計」列</td><td>回 Excel 刪除表尾合計／總計列後重新上傳；系統不會自動刪除。</td></tr>
+      <tr><td>某控制點合計為 0、明細表按鈕停用</td><td>屬正常，代表本期無案件符合該控制點。</td></tr>
+      <tr><td>同一案號在多個控制點重複出現</td><td>屬正常設計，一案符合多項即各列一筆，不合併。</td></tr>
+      <tr><td>第二階段核對後全部留白</td><td>代表會議紀錄之案號與第一階段命中案號無交集，非錯誤。</td></tr>
+      <tr><td>匯出 xlsx 中多筆說明擠在一行</td><td>於 Excel 對該欄開啟「自動換行」即可正常顯示。</td></tr>
+      <tr><td>檔案無法開啟／功能異常</td><td>請確認以 Microsoft Edge 開啟本 HTML 檔；本系統不需連網，若瀏覽器封鎖本機檔案指令碼，請改由 Edge 直接開啟原始檔。</td></tr>
+    </tbody>
+  </table>
+
+  <div class="note" style="margin-top:3mm">
+    <p style="margin:0"><b>版本說明：</b>本說明對應 v1150715（20 項控制點＋合計欄＋合計列防呆＋第二階段核對）。舊版 HTML 檔案予以保留，操作大致相同惟控制點項數較少。控制點意涵屬設計邏輯之整理，如有疑義請以原始需求文件及審計會議簡報為準。</p>
+  </div>
+
+  <div class="foot"><span>國軍軍購案分析系統　使用說明</span><span>第 4 頁　共 4 頁</span></div>
+</section>
+
+</body>
+</html>
