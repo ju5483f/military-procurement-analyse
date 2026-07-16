@@ -133,7 +133,7 @@
   </table>
   <p class="lead" style="font-size:9pt"><b>類別欄（F）</b>值為 <code>軍投</code>／<code>作維</code>／<code>特別預算</code>；其中<b>「特別預算」併入「軍投」類</b>套用軍事投資控制點。</p>
 
-  <div class="foot"><span>國軍軍購案分析系統　使用說明</span><span>第 1 頁　共 4 頁</span></div>
+  <div class="foot"><span>國軍軍購案分析系統　使用說明</span><span>第 1 頁　共 5 頁</span></div>
 </section>
 
 <!-- ============ 第 2 頁 ============ -->
@@ -183,13 +183,16 @@
     </tbody>
   </table>
 
-  <div class="foot"><span>國軍軍購案分析系統　使用說明</span><span>第 2 頁　共 4 頁</span></div>
+  <div class="foot"><span>國軍軍購案分析系統　使用說明</span><span>第 2 頁　共 5 頁</span></div>
 </section>
 
 <!-- ============ 第 3 頁 ============ -->
 <section class="page">
   <h3 style="margin-top:0">步驟五（選用）　第二階段：會議紀錄核對</h3>
   <p>第一階段分析完成後顯示第二階段區塊，用以將分析結果與軍購管制會會議紀錄比對，標示已檢討之案件。</p>
+  <div class="note" style="margin:2mm 0">
+    <p style="margin:0"><b>會議資料來源與準備：</b>請以各軍種定期提供的軍購案季管制會議資料（檔案可搜尋公開區公文系統來文關鍵字下載）為基礎，並利用「軍購管制會會議資料整理技能」的提示詞（prompt）範本，以 AI 工具協助產生可供分析之結構化會議資料，再匯入機密區利用此系統進行勾稽。相關提示詞可參閱專案「軍購管制會會議資料整理技能」資料夾內之檔案。</p>
+  </div>
   <ul>
     <li><b>上傳格式：</b>會議資料整理檔，第一列為表頭，A~D 欄為「檢討態樣／案號／案名／說明或辦理情形」；可同時上傳多檔、亦可逐一移除。</li>
     <li><b>核對規則：</b>以第一階段結果之「案號」精確比對（自動去空白、轉大寫）；命中者於明細列末補上「檢討態樣」與「說明或辦理情形」兩欄。</li>
@@ -200,47 +203,47 @@
   <div class="note" style="font-size:9pt; margin:2mm 0">既知限制：xlsx 儲存格內的換行，需在 Excel 開啟「自動換行」才會顯示多行（免費版元件無法寫入儲存格樣式）。</div>
 
   <h2>肆、控制點說明</h2>
-  <p class="lead" style="font-size:9.3pt">金額門檻單位皆為<b>美元</b>；差異一律取<b>絕對值</b> <code>|K/H − J|</code>；所有比率運算均已防範除以零。符號對應：H 發價值、I 結匯值、J 結匯率、K 交運值、L 交運率、M 備查帳(在途物資)、O FRB 餘額、P 待平衡支付值。</p>
+  <p class="lead" style="font-size:9.3pt">下表列出 20 項控制點之<b>分析項目名稱</b>與其風險意涵。金額門檻單位皆為<b>美元</b>，所有比率運算均已防範除以零；名稱中之「差異」係指「累計交運值/發價值」與「累計結匯率」之差異，均取<b>絕對值</b>。</p>
 
   <h3>一、軍事投資建案（軍投，含特別預算）── 10 項</h3>
   <table>
-    <thead><tr><th style="width:12%" class="c">編號</th><th style="width:52%">篩選條件</th><th>風險意涵</th></tr></thead>
+    <thead><tr><th style="width:11%" class="c">編號</th><th style="width:57%">分析項目名稱</th><th>風險意涵</th></tr></thead>
     <tbody>
-      <tr><td class="n">軍投 1-1</td><td>交運值為 0（<code>K == 0</code>）</td><td>完全未交貨</td></tr>
-      <tr><td class="n">軍投 1-2</td><td>累計交運率未達 50%，不含 0（<code>0 &lt; L &lt; 0.5</code>）</td><td>交貨落後</td></tr>
-      <tr><td class="n">軍投 1-3</td><td><code>|K/H − J| ≥ 0.4</code></td><td>交運進度落後付款進度</td></tr>
-      <tr><td class="n">軍投 1-4</td><td><code>|K/H − J| &lt; 0.4</code> 且 <code>M ≥ 3,000 萬</code></td><td>在途物資（滯美資金）重大</td></tr>
-      <tr><td class="n">軍投 1-5</td><td><code>K/(I−O) &lt; 0.1</code> 且 <code>|K − (I−O)| &gt; 1 億</code></td><td>提領未交，履約異常（風險最高）</td></tr>
-      <tr><td class="n">軍投 1-6</td><td>結匯率超過 100%（<code>J &gt; 1</code>）</td><td>溢付、帳務異常</td></tr>
-      <tr><td class="n">軍投 1-7</td><td><code>O/I ≥ 0.4</code></td><td>結匯滯留，款項閒置於 FRB</td></tr>
-      <tr><td class="n">軍投 1-8</td><td><code>O/I &lt; 0.4</code> 且 <code>O ≥ 3,000 萬</code></td><td>FRB 餘額金額重大</td></tr>
-      <tr><td class="n">軍投 1-9</td><td>待平衡支付值 <code>&gt; 0</code></td><td>我方欠款案件</td></tr>
-      <tr><td class="n">軍投 1-10</td><td><code>J ≥ 0.9</code> 且 <code>L &lt; 0.5</code></td><td>結匯近全額而交運未過半</td></tr>
+      <tr><td class="n">軍投 1-1</td><td>交運值為 0</td><td>完全未交貨</td></tr>
+      <tr><td class="n">軍投 1-2</td><td>累計交運率未達 50％（不含 0）</td><td>交貨落後</td></tr>
+      <tr><td class="n">軍投 1-3</td><td>「累計交運值/發價值」與「累計結匯率」差異達 40％以上</td><td>交運進度落後付款進度</td></tr>
+      <tr><td class="n">軍投 1-4</td><td>「累計交運值/發價值」與「累計結匯率」差異未達 40％，且軍購備查帳餘額達 3,000 萬美元以上</td><td>在途物資（滯美資金）重大</td></tr>
+      <tr><td class="n">軍投 1-5</td><td>「累計交運值」與「累計結匯值減去 FRB 餘額」之比率低於 10％，且二者差異金額大於 1 億美元</td><td>提領未交，履約異常（風險最高）</td></tr>
+      <tr><td class="n">軍投 1-6</td><td>結匯率超過 100％</td><td>溢付、帳務異常</td></tr>
+      <tr><td class="n">軍投 1-7</td><td>FRB 餘額占累計結匯值比率達 40％以上</td><td>結匯滯留，款項閒置於 FRB</td></tr>
+      <tr><td class="n">軍投 1-8</td><td>FRB 餘額占累計結匯值比率未達 40％，且 FRB 餘額達 3,000 萬美元以上</td><td>FRB 餘額金額重大</td></tr>
+      <tr><td class="n">軍投 1-9</td><td>待平衡支付值大於 0（欠款案件）</td><td>我方欠款案件</td></tr>
+      <tr><td class="n">軍投 1-10</td><td>累計結匯率達 90％，且累計交運率未達 50％</td><td>結匯近全額而交運未過半</td></tr>
     </tbody>
   </table>
 
-  <h3>二、作業維持案（作維）── 10 項</h3>
-  <table>
-    <thead><tr><th style="width:12%" class="c">編號</th><th style="width:58%">篩選條件</th><th>風險意涵</th></tr></thead>
-    <tbody>
-      <tr><td class="n">作維 2-1</td><td><code>K == 0</code> 且 <code>I ≥ 300 萬</code></td><td>未交貨（排除小額）</td></tr>
-      <tr><td class="n">作維 2-2</td><td><code>0 &lt; L &lt; 0.5</code> 且 <code>M ≥ 3,000 萬</code></td><td>交貨落後且在途重大</td></tr>
-      <tr><td class="n">作維 2-3</td><td><code>|K/H − J| ≥ 0.5</code> 且 <code>M ≥ 300 萬</code></td><td>進度落差異常</td></tr>
-      <tr><td class="n">作維 2-4</td><td><code>|K/H − J| &lt; 0.5</code> 且 <code>M ≥ 3,000 萬</code></td><td>在途物資重大</td></tr>
-      <tr><td class="n">作維 2-5</td><td><code>K/(I−O) &lt; 0.1</code> 且 <code>|K − (I−O)| &gt; 1,000 萬</code></td><td>提領未交，履約異常</td></tr>
-      <tr><td class="n">作維 2-6</td><td>結匯率超過 100%（<code>J &gt; 1</code>）</td><td>溢付、帳務異常</td></tr>
-      <tr><td class="n">作維 2-7</td><td><code>O/I ≥ 0.5</code> 且 <code>O ≥ 300 萬</code></td><td>結匯滯留於 FRB</td></tr>
-      <tr><td class="n">作維 2-8</td><td><code>O/I &lt; 0.5</code> 且 <code>O ≥ 1,000 萬</code></td><td>FRB 餘額金額重大</td></tr>
-      <tr><td class="n">作維 2-9</td><td>待平衡支付值 <code>&gt; 0</code></td><td>欠款案件</td></tr>
-      <tr><td class="n">作維 2-10</td><td><code>J ≥ 0.9</code> 且 <code>L &lt; 0.5</code></td><td>結匯近全額而交運未過半</td></tr>
-    </tbody>
-  </table>
-
-  <div class="foot"><span>國軍軍購案分析系統　使用說明</span><span>第 3 頁　共 4 頁</span></div>
+  <div class="foot"><span>國軍軍購案分析系統　使用說明</span><span>第 3 頁　共 5 頁</span></div>
 </section>
 
 <!-- ============ 第 4 頁 ============ -->
 <section class="page">
+  <h3 style="margin-top:0">二、作業維持案（作維）── 10 項</h3>
+  <table>
+    <thead><tr><th style="width:11%" class="c">編號</th><th style="width:57%">分析項目名稱</th><th>風險意涵</th></tr></thead>
+    <tbody>
+      <tr><td class="n">作維 2-1</td><td>交運值為 0，結匯值 300 萬美元以上</td><td>未交貨（排除小額）</td></tr>
+      <tr><td class="n">作維 2-2</td><td>累計交運率未達 50％（不含 0），且軍購備查帳餘額達 3,000 萬美元以上</td><td>交貨落後且在途重大</td></tr>
+      <tr><td class="n">作維 2-3</td><td>「累計交運值/發價值」與「累計結匯率」差異達 50％以上，且軍購備查帳餘額 300 萬美元以上</td><td>進度落差異常</td></tr>
+      <tr><td class="n">作維 2-4</td><td>「累計交運值/發價值」與「累計結匯率」差異未達 50％，且軍購備查帳餘額達 3,000 萬美元以上</td><td>在途物資重大</td></tr>
+      <tr><td class="n">作維 2-5</td><td>「累計交運值」與「累計結匯值減去 FRB 餘額」之比率低於 10％，且二者差異金額大於 1,000 萬美元</td><td>提領未交，履約異常</td></tr>
+      <tr><td class="n">作維 2-6</td><td>結匯率超過 100％</td><td>溢付、帳務異常</td></tr>
+      <tr><td class="n">作維 2-7</td><td>FRB 餘額占累計結匯值比率達 50％以上，且 FRB 餘額達 300 萬美元以上</td><td>結匯滯留於 FRB</td></tr>
+      <tr><td class="n">作維 2-8</td><td>FRB 餘額占累計結匯值比率未達 50％，且 FRB 餘額達 1,000 萬美元以上</td><td>FRB 餘額金額重大</td></tr>
+      <tr><td class="n">作維 2-9</td><td>待平衡支付值大於 0（欠款案件）</td><td>欠款案件</td></tr>
+      <tr><td class="n">作維 2-10</td><td>累計結匯率達 90％，且累計交運率未達 50％</td><td>結匯近全額而交運未過半</td></tr>
+    </tbody>
+  </table>
+
   <h2>伍、控制點的設計邏輯（門檻調整前必讀）</h2>
   <p>控制點沿著 FMS「錢的旅程」設計。FMS 採先付款後交貨：我方依發價書與美軍季帳單<b>先結匯付款</b>，款項存入美國聯邦儲備銀行紐約分行之計息帳戶（<b>FRB</b>），美方按未來實需自 FRB 提領支付合約商，交貨後於季帳單列計交運值，我方驗收後沖銷在途物資。</p>
   <div class="note" style="margin:2mm 0">
@@ -261,6 +264,11 @@
     <p style="margin-bottom:0"><b>3. 1-10／2-10（結匯率≥90% 且交運率&lt;50%）</b>為審計實務常用之複合篩選，與 1-2、1-6 部分重疊屬正常，各對應不同檢討態樣，不應合併。</p>
   </div>
 
+  <div class="foot"><span>國軍軍購案分析系統　使用說明</span><span>第 4 頁　共 5 頁</span></div>
+</section>
+
+<!-- ============ 第 5 頁 ============ -->
+<section class="page">
   <h2>陸、注意事項與常見問題</h2>
   <table>
     <thead><tr><th style="width:34%">情形</th><th>處理方式</th></tr></thead>
@@ -276,10 +284,10 @@
   </table>
 
   <div class="note" style="margin-top:3mm">
-    <p style="margin:0"><b>版本說明：</b>本說明對應 v1150715（20 項控制點＋合計欄＋合計列防呆＋第二階段核對）。舊版 HTML 檔案予以保留，操作大致相同惟控制點項數較少。控制點意涵屬設計邏輯之整理，如有疑義請以原始需求文件及審計會議簡報為準。</p>
+    <p style="margin:0"><b>版本說明：</b>本說明對應 v1150715（20 項控制點＋合計欄＋合計列防呆＋第二階段核對）。控制點意涵屬設計邏輯之整理，如有疑義請以原始需求文件及審計會議簡報為準。</p>
   </div>
 
-  <div class="foot"><span>國軍軍購案分析系統　使用說明</span><span>第 4 頁　共 4 頁</span></div>
+  <div class="foot"><span>國軍軍購案分析系統　使用說明</span><span>第 5 頁　共 5 頁</span></div>
 </section>
 
 </body>
