@@ -24,8 +24,10 @@
 | `分析結果表(範例).xlsx` | 分析總表版式範本（種類/編號/名稱/陸海空/其他/合計/第二階段） |
 | `控制點清單.docx` | 20 項分析控制點的需求來源 |
 | `程式需求與規劃.docx` | 最初的需求與規劃文件 |
+| `國軍軍購案分析系統使用說明.md` / `.html` / `.docx` | **給承辦人員的操作手冊**（v1150715，A4 四頁列印版）。`.md` 為維護主檔，`.html` 為列印版，`.docx` 可編輯。修改控制點或流程時**務必同步更新** |
 | `國軍對美軍購案控制點分析項目說明.docx` / `.pdf` | 控制點意涵與設計邏輯說明（**推測性質**，待向原設計者驗證） |
 | `軍購管制會會議資料整理技能/` | 用不同 AI 工具（ChatGPT／Gemini／Claude）將軍購管制會會議資料整理成「第二階段」所需 4 欄 xlsx 的指令集，供在無法用本 Claude 帳號的環境下替代使用 |
+| `會議資料/` | 各單位軍購管制會**實際**會議資料（陸軍／海軍 114-4 PDF）與其整理後的 4 欄 xlsx，供第二階段測試 |
 | `參考資料/` | 審計會議簡報、在途物資管制、軍購執行實務等背景文獻 |
 
 ## 輸入資料欄位對應
@@ -149,6 +151,7 @@ FMS 採先付款後交貨：我方依發價書（LOA）與美軍季帳單（645 
 - **SheetJS 必須內嵌**，不可用 CDN。做法：在 HTML 模板放 `<!--SHEETJS_PLACEHOLDER-->`，用 PowerShell `.Replace()` 將 `xlsx.full.min.js` 內容直接在磁碟上替換進去，避免把 882KB 的 JS 讀進編輯器。
 - 範例 xlsx 常被 Excel 鎖定。讀取前先 `Copy-Item` 到暫存目錄再讀。
 - 本機無 pandoc、LibreOffice、Python。讀 docx/xlsx/pptx 請用 PowerShell 的 `System.IO.Compression.ZipFile` 直接解 XML；讀 PDF 用 Git 附帶的 `pdftotext.exe`；產生 docx 用 `npm i -g docx`（Node），轉 PDF 用 Word COM 自動化。
+- **本專案跨機器作業**（辦公室本機 ＋ claude.ai/code 雲端），遠端 `origin/main` 可能已有本機沒有的 commit。**開工前先 `git fetch` 再看 `git status`**——直接看 `git status` 只會比對本機的追蹤參照，可能是舊的（曾發生本機落後 6 個 commit 而不自知）。雲端工作會開 `claude/xxx` 分支發 PR，合併後記得刪分支。
 
 ## 待辦
 
