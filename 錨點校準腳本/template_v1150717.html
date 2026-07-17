@@ -1,0 +1,1095 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="UTF-8">
+<title>錨點校準工具 v1150717</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: "Microsoft JhengHei", "PMingLiU", sans-serif;
+    background: #eef2f7; color: #1f2d3d; padding: 24px;
+  }
+  .container { max-width: 1500px; margin: 0 auto; }
+  h1 { font-size: 26px; color: #1f4e79; text-align: center; margin-bottom: 4px; }
+  .subtitle { text-align: center; color: #6b7a90; font-size: 13px; margin-bottom: 22px; }
+  .section {
+    background: #fff; border-radius: 10px; padding: 20px 24px; margin-bottom: 18px;
+    box-shadow: 0 1px 4px rgba(31,78,121,.12);
+  }
+  .section-title {
+    font-size: 17px; font-weight: bold; color: #1f4e79; margin-bottom: 14px;
+    display: flex; align-items: center; gap: 10px;
+  }
+  .step-badge {
+    display: inline-flex; align-items: center; justify-content: center;
+    width: 26px; height: 26px; border-radius: 50%;
+    background: #1f4e79; color: #fff; font-size: 14px; flex: none;
+  }
+  .alert { padding: 10px 14px; border-radius: 6px; font-size: 14px; }
+  .alert-warning { background: #fff6e0; border: 1px solid #e8c766; color: #8a6100; }
+  .alert-info { background: #e8f1fb; border: 1px solid #9dc0e8; color: #1f4e79; }
+  .alert-danger { background: #fdecec; border: 1px solid #e59a9a; color: #a11c1c; }
+  .alert-ok { background: #e9f6ea; border: 1px solid #9ccb9f; color: #226b28; }
+  .alert + .alert { margin-top: 8px; }
+  .upload-area {
+    border: 2px dashed #9dc0e8; border-radius: 8px; padding: 34px; text-align: center;
+    cursor: pointer; color: #4a6076; transition: background .15s;
+  }
+  .upload-area:hover, .upload-area.drag { background: #f0f6fd; }
+  .upload-area .big { font-size: 16px; font-weight: bold; color: #1f4e79; }
+  #file-name { margin-top: 10px; font-size: 14px; color: #2e7d32; }
+  .table-wrap { overflow-x: auto; max-height: 420px; overflow-y: auto; border: 1px solid #d6dee8; border-radius: 6px; }
+  table { border-collapse: collapse; width: 100%; font-size: 13px; white-space: nowrap; }
+  th, td { border: 1px solid #d6dee8; padding: 6px 10px; }
+  thead th { background: #1f4e79; color: #fff; position: sticky; top: 0; font-weight: normal; }
+  tbody tr:nth-child(even) { background: #f5f8fc; }
+  td.num { text-align: right; font-variant-numeric: tabular-nums; }
+  td.ctr { text-align: center; }
+  .grp-row td { background: #dce6f1 !important; font-weight: bold; color: #1f4e79; }
+  th.col-letter { background: #163d5e; font-size: 12px; padding: 3px 10px; }
+  th.rowlab, td.rowlab {
+    background: #f0f4f9; color: #1f4e79; font-weight: bold; font-size: 12px;
+    text-align: center; position: sticky; left: 0; z-index: 2;
+  }
+  thead th.rowlab { background: #163d5e; color: #fff; z-index: 3; }
+  tr.file-header-row td {
+    background: #fff6e0 !important; font-weight: bold; color: #6b4e00;
+    white-space: normal; min-width: 90px;
+  }
+  tr.file-header-row td.rowlab { background: #ffe9b3 !important; color: #8a6100; }
+  tr.file-header-row td.mismatch { background: #fdd8d8 !important; color: #a11c1c; }
+  .legend { font-size: 12px; color: #6b7a90; margin: 8px 0 10px; }
+  .legend span { display: inline-block; margin-right: 16px; }
+  .swatch { display: inline-block; width: 12px; height: 12px; border: 1px solid #c8ceda; vertical-align: -2px; margin-right: 4px; }
+  .btn {
+    display: inline-block; border: none; border-radius: 6px; cursor: pointer;
+    padding: 10px 22px; font-size: 15px; font-family: inherit;
+    background: #1f4e79; color: #fff;
+  }
+  .btn:hover:not(:disabled) { background: #2a63a0; }
+  .btn:disabled { background: #b8c4d2; cursor: not-allowed; }
+  .btn-green { background: #2e7d32; }
+  .btn-green:hover:not(:disabled) { background: #3b9a41; }
+  .btn-gray { background: #5a6b7f; }
+  .btn-gray:hover:not(:disabled) { background: #6e8098; }
+  .btn-row { margin-top: 14px; display: flex; gap: 12px; flex-wrap: wrap; align-items: center; }
+  .count-line { margin: 10px 0; font-size: 14px; color: #1f4e79; }
+  .hidden { display: none !important; }
+  .footer { text-align: center; color: #9aa7b6; font-size: 12px; margin-top: 8px; }
+
+  /* ---- 校準工具專用 ---- */
+  .guide {
+    background: #f0f4f9; border: 1px solid #ccd8e6; border-left: 4px solid #1f4e79;
+    border-radius: 6px; padding: 14px 18px; margin-bottom: 16px;
+    font-size: 13.5px; line-height: 1.85; white-space: pre-wrap;
+    font-family: "Microsoft JhengHei", monospace;
+  }
+  .guide b { color: #1f4e79; }
+  .param-grid {
+    display: grid; grid-template-columns: repeat(auto-fill, minmax(310px, 1fr));
+    gap: 12px 20px; margin-bottom: 4px;
+  }
+  .param-box { border: 1px solid #d6dee8; border-radius: 6px; padding: 10px 12px; background: #fbfcfe; }
+  .param-box label { display: block; font-size: 13.5px; font-weight: bold; color: #1f4e79; margin-bottom: 5px; }
+  .param-box input[type=number], .param-box select {
+    width: 100%; padding: 5px 8px; border: 1px solid #b8c4d2; border-radius: 4px;
+    font-size: 14px; font-family: inherit; text-align: right;
+  }
+  .param-box select { text-align: left; }
+  .param-box .hint { font-size: 11.5px; color: #8a94a3; margin-top: 5px; line-height: 1.5; }
+  .param-box .echo { font-size: 12px; color: #2e7d32; margin-top: 4px; }
+  .sub-title { font-size: 15px; font-weight: bold; color: #1f4e79; margin: 18px 0 8px; }
+  .sub-title:first-child { margin-top: 0; }
+  .sub-note { font-size: 12.5px; color: #6b7a90; margin-bottom: 8px; line-height: 1.6; }
+  td.pin-bad { background: #fdd8d8 !important; color: #a11c1c; font-weight: bold; }
+  td.pin-ok { color: #2e7d32; }
+  details.sensitive { border: 2px solid #e59a9a; border-radius: 8px; overflow: hidden; margin-top: 8px; }
+  details.sensitive summary {
+    cursor: pointer; padding: 11px 16px; background: #fdecec; color: #a11c1c;
+    font-weight: bold; font-size: 14.5px; user-select: none;
+  }
+  details.sensitive[open] summary { border-bottom: 1px solid #e59a9a; }
+  .sensitive-body { padding: 14px 16px; }
+  .final-box {
+    background: #f0f6fd; border: 2px solid #1f4e79; border-radius: 8px;
+    padding: 18px 22px; margin-bottom: 14px;
+  }
+  table.final-table { width: auto; font-size: 19px; white-space: nowrap; }
+  table.final-table th, table.final-table td { border: none; padding: 7px 16px 7px 0; }
+  table.final-table th { background: none; color: #1f4e79; text-align: left; font-weight: normal; position: static; }
+  table.final-table td { font-weight: bold; color: #12395c; font-variant-numeric: tabular-nums; }
+  .nature { font-size: 13px; line-height: 1.9; }
+  .nature dt { font-weight: bold; color: #1f4e79; float: left; clear: left; width: 5.5em; }
+  .nature dd { margin-left: 5.8em; margin-bottom: 4px; }
+  .chk-row { display: flex; align-items: center; gap: 8px; font-size: 13.5px; color: #a11c1c; }
+  .chk-row input { width: 16px; height: 16px; }
+
+  @media print {
+    body { background: #fff; padding: 0; }
+    .section { box-shadow: none; border: 1px solid #ccc; page-break-inside: avoid; }
+    .no-print { display: none !important; }
+    .final-box { border: 2px solid #000; }
+  }
+</style>
+</head>
+<body>
+<div class="container">
+
+  <h1>錨點校準工具</h1>
+  <div class="subtitle">版本 v1150717｜為風險評分決定「錨點」數值｜搭配國軍軍購案分析系統 v1150715｜離線單機執行</div>
+
+  <div class="section no-print">
+    <div class="alert alert-info">
+      <b>本工具的用途</b>：風險評分要把「比率」與「金額」換算成 1~10 分，換算需要「錨點」（幾分之下算輕微、多少以上算最嚴重）。
+      錨點必須看真實資料的分布才訂得準，故以本工具在機密區現場試算。<br>
+      <b>流程</b>：① 上傳管制表 → ② 確認欄位 → ③ 調整參數（邊調邊看④）→ ④ 看結果 → ⑤ 記下 6 個數字帶回 → ⑥ 下載（選用）。<br>
+      <b>本工具不產生個案分析結果，只產生統計數字。</b>各區塊資料性質與攜出注意事項請見⑤。
+    </div>
+  </div>
+
+  <div class="section no-print">
+    <div class="section-title"><span class="step-badge">1</span>上傳執行中管制表</div>
+    <div class="alert alert-warning" style="margin-bottom:14px;">
+      ⚠️請先手動刪除文件標題，讓檔案第一列即為欄位名稱（欄位 A~P 共 16 欄）<br>
+      ⚠️請注意文件最末筆資料是否為「合計」，若是請先手動刪除，避免將該筆資料納入統計
+    </div>
+    <div class="upload-area" id="upload-area">
+      <div class="big">點擊或拖曳上傳 .xlsx 檔案</div>
+      <div style="margin-top:6px;font-size:13px;">執行中軍購案個案管制表</div>
+      <div id="file-name"></div>
+    </div>
+    <input type="file" id="file-input" accept=".xlsx,.xls" style="display:none">
+  </div>
+
+  <div class="section hidden no-print" id="sec-preview">
+    <div class="section-title"><span class="step-badge">2</span>預覽完整資料｜確認欄位</div>
+    <div class="alert alert-warning">
+      ⚠️ <b>請先確認欄位是否正確再接續校準。</b>
+      下表第一列（黃底）為<b>上傳檔案的原始表頭</b>，請與表頭區的「系統預設欄位」逐欄核對。
+      若國防部來函資料調換過欄位順序，校準結果將完全錯誤。
+    </div>
+    <div id="preview-check"></div>
+    <div class="legend">
+      <span><i class="swatch" style="background:#1f4e79;"></i>系統預設欄位（校準所依據）</span>
+      <span><i class="swatch" style="background:#fff6e0;"></i>上傳檔案表頭</span>
+      <span><i class="swatch" style="background:#fdd8d8;"></i>與預設不符</span>
+    </div>
+    <div class="count-line" id="preview-count"></div>
+    <div class="table-wrap" id="preview-wrap"></div>
+  </div>
+
+  <div class="section hidden no-print" id="sec-params">
+    <div class="section-title"><span class="step-badge">3</span>調整參數（金額單位：美元）</div>
+    <div class="guide" id="guide"></div>
+    <div class="param-grid" id="param-grid"></div>
+    <div class="btn-row">
+      <button class="btn btn-gray" id="btn-reset">還原預設值</button>
+      <span class="sub-note" style="margin:0;">改動任一欄位，下方④會立即重算。</span>
+    </div>
+  </div>
+
+  <div class="section hidden no-print" id="sec-result">
+    <div class="section-title"><span class="step-badge">4</span>校準結果</div>
+
+    <div class="sub-title">A　各評分維度命中案件數</div>
+    <div class="sub-note">純計數，不含金額。成對控制點（1-3/1-4、1-7/1-8、2-3/2-4、2-7/2-8）已合併為單一維度，命中任一即計入。</div>
+    <div class="table-wrap" style="max-height:none;" id="wrap-a"></div>
+
+    <div class="sub-title">B　錨點適配情形</div>
+    <div class="sub-note">
+      <b>貼頂</b>＝該軸數值已達或超過上錨，嚴重度被截在滿分，彼此無法區分（紅色標示）。
+      <b>貼底</b>＝已達或低於下錨，該軸得 0 分、完全不提供資訊。兩者都應盡量降到 0。
+    </div>
+    <div class="table-wrap" style="max-height:none;" id="wrap-b1"></div>
+    <div class="sub-title" style="font-size:14px;">B-2　候選上錨對照（金額軸）</div>
+    <div class="table-wrap" style="max-height:none;" id="wrap-b2"></div>
+    <div class="sub-title" style="font-size:14px;">B-3　候選下錨對照（金額軸）</div>
+    <div class="table-wrap" style="max-height:none;" id="wrap-b3"></div>
+    <div class="sub-title" style="font-size:14px;">B-4　候選上錨對照（待平衡支付值、結匯率）</div>
+    <div class="table-wrap" style="max-height:none;" id="wrap-b4"></div>
+
+    <div class="sub-title">C1　各維度分數統計</div>
+    <div class="sub-note">
+      <b>這是校準的主要依據</b>，且完全不涉金額。目標是讓每個維度的分數合理鋪開在 1~10 之間。<br>
+      註：雙軸維度要兩軸同時嚴重才拿高分，天花板本來就比單軸維度低，不必勉強調到 10。
+    </div>
+    <div class="table-wrap" style="max-height:none;" id="wrap-c1"></div>
+
+    <div class="sub-title">C2　總分分布</div>
+    <div class="sub-note">總分＝各維度分數加總。單案最多命中 7 個維度，故理論上限為 70 分。</div>
+    <div class="table-wrap" style="max-height:none;" id="wrap-c2"></div>
+
+    <div class="sub-title">待定試算：作維 2-1 若改為隨累計結匯值計分</div>
+    <div class="sub-note">2-1 目前的評分標準是「命中即 10 分」，但它其實有兩個條件（交運值為 0、結匯值 300 萬以上）。以下試算若改為隨結匯值計分，分數會如何分布（不含金額）。</div>
+    <div class="table-wrap" style="max-height:none;" id="wrap-21"></div>
+
+    <div class="sub-title">D　精確金額分布</div>
+    <details class="sensitive">
+      <summary>⚠️ 點此展開（含真實金額。校準不需要這一區，可完全不開）</summary>
+      <div class="sensitive-body">
+        <div class="alert alert-danger" style="margin-bottom:12px;">
+          以下數字是由真實管制表直接算出的<b>金額</b>（最大值、百分位數等），雖不指向特定案件，
+          但性質與 A、C 區的純計數不同。是否檢視、是否攜出，請依貴單位規定自行判定。
+        </div>
+        <div class="table-wrap" style="max-height:none;" id="wrap-d"></div>
+      </div>
+    </details>
+  </div>
+
+  <div class="section hidden" id="sec-final">
+    <div class="section-title"><span class="step-badge">5</span>完成：帶回公開區的內容</div>
+    <div class="final-box">
+      <div style="font-size:14px;color:#1f4e79;margin-bottom:10px;">校準完成。以下 6 個數字就是本次的全部成果，請記下或列印：</div>
+      <table class="final-table" id="final-params"></table>
+    </div>
+    <div class="alert alert-warning">
+      <b>⚠️ 攜出前請注意本工具各區塊的性質</b>
+      <dl class="nature" style="margin-top:8px;">
+        <dt>A、C 區</dt><dd>純計數與分數統計，不含金額。</dd>
+        <dt>B 區</dt><dd>雖然只有案件數，但候選錨點對照表會以「級距」反映金額範圍——例如「10 億貼頂 1 案、20 億貼頂 0 案」即代表最大值落在 10~20 億之間。</dd>
+        <dt>D 區</dt><dd>含真實金額的精確統計（最大值、百分位數）。預設不納入下載。</dd>
+      </dl>
+      <div style="margin-top:8px;">以上各區可否攜出，請依貴單位規定自行判定；<b>本工具不做此判定</b>。</div>
+    </div>
+  </div>
+
+  <div class="section hidden no-print" id="sec-download">
+    <div class="section-title"><span class="step-badge">6</span>下載校準結果（選用）</div>
+    <div class="sub-note">工作表包含：本次參數設定、A、B、C1、C2、2-1 試算。</div>
+    <div class="chk-row" style="margin:10px 0 4px;">
+      <input type="checkbox" id="chk-d">
+      <label for="chk-d">同時包含 D 區「精確金額分布」（<b>含真實金額</b>，預設不勾）</label>
+    </div>
+    <div class="btn-row">
+      <button class="btn btn-green" id="btn-dl">下載校準結果 (.xlsx)</button>
+      <button class="btn btn-gray" id="btn-print">列印⑤的參數</button>
+    </div>
+  </div>
+
+  <div class="footer">本工具為離線單一檔案，資料僅於本機瀏覽器內處理，不會上傳任何伺服器。</div>
+</div>
+
+<script>
+
+<!--SHEETJS_PLACEHOLDER-->
+
+</script>
+
+<script>
+'use strict';
+
+/* ========== 欄位定義（同 v1150715） ========== */
+var IN_COLS = 16;
+var IN_HEADERS = ['項次','案號','軍種','單位','案名','類別','預算科目',
+  '發價值(A)\n美元','累積結匯值(B)\n美元','累計結匯率\n(C)=(B)/(A)','累積交運值(D)\n美元',
+  '累計交運率\n(E)=(D)/(B)','軍購備查帳\n(F)=(B)-(D)\n美元','軍購備查帳\n(F)=(B)-(D)\n新臺幣元','FRB餘額','待平衡支付值\n美元'];
+
+/* ========== 控制點門檻（同 v1150715 的 PARAM_DEFS，此處固定不可調） ========== */
+var PARAM_DEFS = {
+  p_jt2_r:{def:0.5}, p_jt34_d:{def:0.4}, p_jt4_a:{def:30000000}, p_jt5_r:{def:0.1},
+  p_jt5_a:{def:100000000}, p_jt6_r:{def:1.0}, p_jt78_f:{def:0.4}, p_jt8_a:{def:30000000},
+  p_jt10_j:{def:0.9}, p_jt10_l:{def:0.5},
+  p_zw1_a:{def:3000000}, p_zw2_r:{def:0.5}, p_zw2_a:{def:30000000}, p_zw34_d:{def:0.5},
+  p_zw3_a:{def:3000000}, p_zw4_a:{def:30000000}, p_zw5_r:{def:0.1}, p_zw5_a:{def:10000000},
+  p_zw6_r:{def:1.0}, p_zw78_f:{def:0.5}, p_zw7_a:{def:3000000}, p_zw8_a:{def:10000000},
+  p_zw10_j:{def:0.9}, p_zw10_l:{def:0.5}
+};
+function defaultParams() {
+  var p = {};
+  for (var k in PARAM_DEFS) if (PARAM_DEFS.hasOwnProperty(k)) p[k] = PARAM_DEFS[k].def;
+  return p;
+}
+var P = defaultParams();
+
+/* ========== 16 個評分維度 ==========
+   axes: [{kind:'ratio'|'money', label, get, lo, hi, thr}]
+   ratio 的 lo/hi 為固定數；hi===null 表示用「結匯率上錨」
+   money 的 thr 為預設下錨（控制點門檻）；thr===null 表示待平衡支付值軸（用 P 上/下錨） */
+function Rax(label, get, lo, hi) { return { kind:'ratio', label:label, get:get, lo:lo, hi:hi }; }
+function Max(label, get, thr) { return { kind:'money', label:label, get:get, thr:thr }; }
+function nn() { for (var i=0;i<arguments.length;i++) if (arguments[i]===null||arguments[i]===undefined) return false; return true; }
+
+var SCORE_DIMS = [
+  { id:'1-1', cat:'軍投', jt:1, name:'交運值為0', fixed:10,
+    hit:function(v){ return nn(v.K) && v.K===0; } },
+  { id:'1-2', cat:'軍投', jt:1, name:'累計交運率未達50％（不含0）',
+    axes:[Rax('累計交運率', function(v){return v.L;}, 0.5, 0)],
+    hit:function(v){ return nn(v.L) && v.L>0 && v.L<P.p_jt2_r; } },
+  { id:'1-3/1-4', cat:'軍投', jt:1, name:'在途物資（交運落後付款＋備查帳餘額重大）',
+    axes:[Rax('差異', function(v){return v.diff;}, 0, 1), Max('軍購備查帳餘額', function(v){return v.M;}, 30000000)],
+    hit:function(v){ return (nn(v.diff) && v.diff>=P.p_jt34_d) || (nn(v.diff,v.M) && v.diff<P.p_jt34_d && v.M>=P.p_jt4_a); } },
+  { id:'1-5', cat:'軍投', jt:1, name:'提領未交（履約異常）',
+    axes:[Rax('交運/已提領', function(v){return v.kr;}, 0.1, 0), Max('二者差異金額', function(v){return v.gap;}, 100000000)],
+    hit:function(v){ return nn(v.drawn,v.K,v.kr,v.gap) && v.drawn>0 && v.kr<P.p_jt5_r && v.gap>P.p_jt5_a; } },
+  { id:'1-6', cat:'軍投', jt:1, name:'結匯率超過100％',
+    axes:[Rax('累計結匯率', function(v){return v.J;}, 1.0, null)],
+    hit:function(v){ return nn(v.J) && v.J>P.p_jt6_r; } },
+  { id:'1-7/1-8', cat:'軍投', jt:1, name:'FRB 結匯滯留（占比＋餘額重大）',
+    axes:[Rax('FRB占結匯值比率', function(v){return v.OI;}, 0, 1), Max('FRB餘額', function(v){return v.O;}, 30000000)],
+    hit:function(v){ return (nn(v.OI) && v.OI>=P.p_jt78_f) || (nn(v.OI,v.O) && v.OI<P.p_jt78_f && v.O>=P.p_jt8_a); } },
+  { id:'1-9', cat:'軍投', jt:1, name:'待平衡支付值大於0（欠款案件）',
+    axes:[Max('待平衡支付值', function(v){return v.Pv;}, null)],
+    hit:function(v){ return nn(v.Pv) && v.Pv>0; } },
+  { id:'1-10', cat:'軍投', jt:1, name:'結匯率達90％且交運率未達50％',
+    axes:[Rax('結匯率與交運率差距', function(v){return v.jl;}, 0.4, 1.0)],
+    hit:function(v){ return nn(v.J,v.L) && v.J>=P.p_jt10_j && v.L<P.p_jt10_l; } },
+
+  { id:'2-1', cat:'作維', jt:0, name:'交運值為0，結匯值300萬美元以上', fixed:10,
+    hit:function(v){ return nn(v.K,v.I) && v.K===0 && v.I>=P.p_zw1_a; } },
+  { id:'2-2', cat:'作維', jt:0, name:'交貨落後且在途重大',
+    axes:[Rax('累計交運率', function(v){return v.L;}, 0.5, 0), Max('軍購備查帳餘額', function(v){return v.M;}, 30000000)],
+    hit:function(v){ return nn(v.L,v.M) && v.L>0 && v.L<P.p_zw2_r && v.M>=P.p_zw2_a; } },
+  { id:'2-3/2-4', cat:'作維', jt:0, name:'在途物資（進度落差＋備查帳餘額重大）',
+    axes:[Rax('差異', function(v){return v.diff;}, 0, 1), Max('軍購備查帳餘額', function(v){return v.M;}, 3000000)],
+    hit:function(v){ return nn(v.diff,v.M) && ((v.diff>=P.p_zw34_d && v.M>=P.p_zw3_a) || (v.diff<P.p_zw34_d && v.M>=P.p_zw4_a)); } },
+  { id:'2-5', cat:'作維', jt:0, name:'提領未交（履約異常）',
+    axes:[Rax('交運/已提領', function(v){return v.kr;}, 0.1, 0), Max('二者差異金額', function(v){return v.gap;}, 10000000)],
+    hit:function(v){ return nn(v.drawn,v.K,v.kr,v.gap) && v.drawn>0 && v.kr<P.p_zw5_r && v.gap>P.p_zw5_a; } },
+  { id:'2-6', cat:'作維', jt:0, name:'結匯率超過100％',
+    axes:[Rax('累計結匯率', function(v){return v.J;}, 1.0, null)],
+    hit:function(v){ return nn(v.J) && v.J>P.p_zw6_r; } },
+  { id:'2-7/2-8', cat:'作維', jt:0, name:'FRB 結匯滯留（占比＋餘額重大）',
+    axes:[Rax('FRB占結匯值比率', function(v){return v.OI;}, 0, 1), Max('FRB餘額', function(v){return v.O;}, 3000000)],
+    hit:function(v){ return nn(v.OI,v.O) && ((v.OI>=P.p_zw78_f && v.O>=P.p_zw7_a) || (v.OI<P.p_zw78_f && v.O>=P.p_zw8_a)); } },
+  { id:'2-9', cat:'作維', jt:0, name:'待平衡支付值大於0（欠款案件）',
+    axes:[Max('待平衡支付值', function(v){return v.Pv;}, null)],
+    hit:function(v){ return nn(v.Pv) && v.Pv>0; } },
+  { id:'2-10', cat:'作維', jt:0, name:'結匯率達90％且交運率未達50％',
+    axes:[Rax('結匯率與交運率差距', function(v){return v.jl;}, 0.4, 1.0)],
+    hit:function(v){ return nn(v.J,v.L) && v.J>=P.p_zw10_j && v.L<P.p_zw10_l; } }
+];
+
+/* ========== 可調參數（錨點） ========== */
+var ANCHOR_DEFS = [
+  { key:'moneyHi', label:'金額上錨', def:1000000000, kind:'money',
+    hint:'軍購備查帳餘額／FRB餘額／提領未交差額共用。看 B-2 找出貼頂為 0 的最小值，再設為其 2 倍。' },
+  { key:'moneyLoMode', label:'金額下錨', def:'thr', kind:'select',
+    opts:[['thr','用各控制點門檻（預設）'],['custom','自訂統一值']],
+    hint:'影響最大的參數。若 B-1 顯示很多案件貼底，切成自訂並往下調。' },
+  { key:'moneyLo', label:'　└ 自訂下錨值', def:100000, kind:'money',
+    hint:'僅在上方選「自訂統一值」時生效。' },
+  { key:'pLo', label:'待平衡支付值下錨', def:100000, kind:'money',
+    hint:'不可為 0（對數換算）。看 B-3 的 P 軸。' },
+  { key:'pHi', label:'待平衡支付值上錨', def:10000000, kind:'money',
+    hint:'最沒把握的參數，務必看 B-4 決定。' },
+  { key:'jHi', label:'結匯率上錨（％）', def:120, kind:'pct',
+    hint:'結匯率達此值即為最嚴重（10 分）。看 B-4 最後幾列。' },
+  { key:'w', label:'雙軸權重 w（比率軸占比）', def:0.5, kind:'w',
+    hint:'金額軸占 1−w。單軸維度不受影響。維持 0.5 即可。' }
+];
+var A = {};
+function resetAnchors() {
+  for (var i=0;i<ANCHOR_DEFS.length;i++) A[ANCHOR_DEFS[i].key] = ANCHOR_DEFS[i].def;
+}
+resetAnchors();
+// 實際生效的金額下錨：null 代表「用各控制點門檻」
+function effMoneyLo() { return A.moneyLoMode === 'custom' ? A.moneyLo : null; }
+function effJHi() { return A.jHi / 100; }
+
+/* ========== 全域狀態 ========== */
+var dataRows = null;
+var rawHeader = null;
+var CASES = null;      // [{jt, v}]
+var RES = null;        // compute() 結果
+
+/* ========== 工具函式（同 v1150715） ========== */
+function num(v) {
+  if (v === null || v === undefined || v === '') return null;
+  var n = (typeof v === 'number') ? v : parseFloat(String(v).replace(/,/g, ''));
+  return isNaN(n) ? null : n;
+}
+function calcVals(row) {
+  var H = num(row[7]), I = num(row[8]), J = num(row[9]), K = num(row[10]),
+      L = num(row[11]), M = num(row[12]), O = num(row[14]), Pv = num(row[15]);
+  return {
+    H:H, I:I, J:J, K:K, L:L, M:M, O:O, Pv:Pv,
+    diff: (H !== null && H > 0 && K !== null && J !== null) ? Math.abs(K / H - J) : null,
+    drawn:(I !== null && O !== null) ? I - O : null,
+    OI:   (I !== null && I > 0 && O !== null) ? O / I : null,
+    kr:   (I !== null && O !== null && (I - O) > 0 && K !== null) ? K / (I - O) : null,
+    gap:  (I !== null && O !== null && K !== null) ? Math.abs(K - (I - O)) : null,
+    jl:   (J !== null && L !== null) ? J - L : null
+  };
+}
+function isZuoWei(row) { return String(row[5] === undefined ? '' : row[5]).trim() === '作維'; }
+function fmtMoney(v) {
+  var n = num(v);
+  return n === null ? String(v === undefined ? '' : v)
+                    : n.toLocaleString('en-US', { maximumFractionDigits: 2 });
+}
+function fmtRatio(v) {
+  var n = num(v);
+  return n === null ? String(v === undefined ? '' : v) : (n * 100).toFixed(2) + '%';
+}
+// 金額的中文短寫，供錨點回顯與對照表用
+function fmtShort(n) {
+  if (n === null || n === undefined) return '';
+  if (n >= 1e8) return (n / 1e8).toFixed(n % 1e8 === 0 ? 0 : 2) + ' 億';
+  if (n >= 1e4) return (n / 1e4).toFixed(n % 1e4 === 0 ? 0 : 2) + ' 萬';
+  return String(n);
+}
+function todayStr() {
+  var d = new Date();
+  return d.getFullYear().toString() +
+    String(d.getMonth() + 1).padStart(2, '0') +
+    String(d.getDate()).padStart(2, '0');
+}
+function esc(s) {
+  return String(s === undefined || s === null ? '' : s)
+    .replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+}
+function colLetter(n) {
+  var s = '', x = n + 1;
+  while (x > 0) { var m = (x - 1) % 26; s = String.fromCharCode(65 + m) + s; x = Math.floor((x - 1) / 26); }
+  return s;
+}
+function normHeader(s) { return String(s === undefined || s === null ? '' : s).replace(/\s+/g, ''); }
+function detectTotalRow() {
+  if (!dataRows || !dataRows.length) return null;
+  var last = dataRows[dataRows.length - 1];
+  for (var c = 0; c <= 6; c++) {
+    var t = String(last[c] === undefined || last[c] === null ? '' : last[c]);
+    if (t.indexOf('合計') >= 0 || t.indexOf('總計') >= 0) {
+      return { rowNo: dataRows.length, col: colLetter(c), text: t.replace(/\s+/g, ' ').trim() };
+    }
+  }
+  return null;
+}
+function headerMismatches() {
+  var bad = [];
+  if (!rawHeader) return bad;
+  for (var i = 0; i < IN_COLS; i++)
+    if (normHeader(rawHeader[i]) !== normHeader(IN_HEADERS[i])) bad.push(i);
+  return bad;
+}
+
+/* ========== 檔案上傳與解析 ========== */
+var uploadArea = document.getElementById('upload-area');
+var fileInput = document.getElementById('file-input');
+uploadArea.addEventListener('click', function () { fileInput.click(); });
+uploadArea.addEventListener('dragover', function (e) { e.preventDefault(); uploadArea.classList.add('drag'); });
+uploadArea.addEventListener('dragleave', function () { uploadArea.classList.remove('drag'); });
+uploadArea.addEventListener('drop', function (e) {
+  e.preventDefault(); uploadArea.classList.remove('drag');
+  if (e.dataTransfer.files.length) readFile(e.dataTransfer.files[0]);
+});
+fileInput.addEventListener('change', function () {
+  if (fileInput.files.length) readFile(fileInput.files[0]);
+});
+function readFile(file) {
+  var reader = new FileReader();
+  reader.onload = function (e) {
+    try { parseWorkbook(e.target.result, file.name); }
+    catch (err) { alert('讀取失敗：' + err.message); }
+  };
+  reader.readAsArrayBuffer(file);
+}
+function parseWorkbook(arrayBuffer, fileName) {
+  var wb = XLSX.read(arrayBuffer, { type: 'array' });
+  var ws = wb.Sheets[wb.SheetNames[0]];
+  var rows = XLSX.utils.sheet_to_json(ws, { header: 1, defval: '' });
+  if (!rows.length) { alert('檔案內沒有資料'); return; }
+  var header = rows[0];
+  if (header.length < IN_COLS) {
+    alert('欄位不足 ' + IN_COLS + ' 欄（僅偵測到 ' + header.length + ' 欄）。\n請確認：\n1. 已刪除文件標題列，第一列即為欄位名稱\n2. 已包含「待平衡支付值」欄（P欄）');
+    return;
+  }
+  rawHeader = header;
+  dataRows = rows.slice(1).filter(function (r) {
+    return r.some(function (c) { return c !== '' && c !== null && c !== undefined; });
+  });
+  document.getElementById('file-name').textContent = '✓ 已載入：' + (fileName || '') + '（' + dataRows.length + ' 筆資料）';
+  renderPreview();
+  document.getElementById('sec-preview').classList.remove('hidden');
+
+  // 防呆：欄位不符或合計列 → 二次確認
+  var bad = headerMismatches(), tot = detectTotalRow(), msgs = [];
+  if (bad.length) {
+    var ns = [];
+    for (var i = 0; i < bad.length; i++) ns.push(colLetter(bad[i]) + ' 欄');
+    msgs.push('偵測到 ' + bad.length + ' 個欄位與系統預設不符（' + ns.join('、') + '）。\n本工具依「欄位位置」讀取資料，欄位順序若遭調換，校準結果將完全錯誤。');
+  }
+  if (tot) {
+    msgs.push('最末筆資料（第 ' + tot.rowNo + ' 列）疑似「合計」列（' + tot.col + ' 欄：「' + tot.text + '」）。\n此列並非真實案件，納入統計會嚴重扭曲金額分布。');
+  }
+  if (msgs.length && !confirm(msgs.join('\n\n') + '\n\n仍要繼續校準嗎？\n（建議按「取消」，修正檔案後重新上傳）')) {
+    document.getElementById('sec-params').classList.add('hidden');
+    document.getElementById('sec-result').classList.add('hidden');
+    document.getElementById('sec-final').classList.add('hidden');
+    document.getElementById('sec-download').classList.add('hidden');
+    return;
+  }
+
+  CASES = dataRows.map(function (r) { return { jt: isZuoWei(r) ? 0 : 1, v: calcVals(r) }; });
+  renderParamInputs();
+  recompute();
+  document.getElementById('sec-params').classList.remove('hidden');
+  document.getElementById('sec-result').classList.remove('hidden');
+  document.getElementById('sec-final').classList.remove('hidden');
+  document.getElementById('sec-download').classList.remove('hidden');
+}
+
+/* ========== 預覽（含欄位核對，同 v1150715） ========== */
+var RATIO_IN = [9, 11];
+var MONEY_IN = [7, 8, 10, 12, 13, 14, 15];
+function renderPreview() {
+  var nCols = Math.max(IN_COLS, rawHeader.length);
+  var bad = headerMismatches();
+  var i, c, r;
+  var msg = '';
+  if (bad.length) {
+    var names = [];
+    for (i = 0; i < bad.length; i++) {
+      names.push(colLetter(bad[i]) + ' 欄（預設「' +
+        esc(String(IN_HEADERS[bad[i]]).replace(/\s+/g, ' ')) + '」，實際「' +
+        esc(String(rawHeader[bad[i]] === undefined ? '(空白)' : rawHeader[bad[i]]).replace(/\s+/g, ' ')) + '」）');
+    }
+    msg += '<div class="alert alert-danger">🛑 <b>偵測到 ' + bad.length +
+      ' 個欄位與系統預設不符</b>，校準結果可能完全錯誤，請確認欄位順序是否遭調換：<br>' +
+      names.join('<br>') + '</div>';
+  } else {
+    msg += '<div class="alert alert-ok">✓ 上傳檔案的 ' + IN_COLS +
+      ' 個欄位名稱與系統預設完全相符（比對時忽略空白與換行）。</div>';
+  }
+  if (rawHeader.length > IN_COLS) {
+    msg += '<div class="alert alert-warning">ℹ️ 檔案另有 ' + (rawHeader.length - IN_COLS) +
+      ' 個多餘欄位（' + colLetter(IN_COLS) + ' 欄以後），校準時將予以忽略。</div>';
+  }
+  var tot = detectTotalRow();
+  if (tot) {
+    msg += '<div class="alert alert-danger">🛑 <b>最末筆資料（第 ' + tot.rowNo + ' 列）疑似「合計」列</b>' +
+      '（' + tot.col + ' 欄：「' + esc(tot.text) + '」）。此列並非真實案件，' +
+      '納入統計會嚴重扭曲金額分布，<b>請先手動刪除該列後重新上傳</b>。</div>';
+  }
+  document.getElementById('preview-check').innerHTML = msg;
+
+  var html = '<table><thead>';
+  html += '<tr><th class="rowlab">Excel 欄</th>';
+  for (i = 0; i < nCols; i++) html += '<th class="col-letter">' + colLetter(i) + '</th>';
+  html += '</tr><tr><th class="rowlab">系統預設欄位</th>';
+  for (i = 0; i < nCols; i++) {
+    html += '<th>' + (i < IN_COLS ? esc(IN_HEADERS[i]).replace(/\n/g, '<br>') : '<i>（多餘欄位）</i>') + '</th>';
+  }
+  html += '</tr></thead><tbody>';
+  html += '<tr class="file-header-row"><td class="rowlab">上傳檔案表頭</td>';
+  for (i = 0; i < nCols; i++) {
+    var isBad = bad.indexOf(i) >= 0;
+    html += '<td' + (isBad ? ' class="mismatch"' : '') + '>' + esc(rawHeader[i]).replace(/\n/g, '<br>') + '</td>';
+  }
+  html += '</tr>';
+  for (r = 0; r < dataRows.length; r++) {
+    var row = dataRows[r];
+    html += '<tr><td class="rowlab">' + (r + 1) + '</td>';
+    for (c = 0; c < nCols; c++) {
+      var v = row[c];
+      if (RATIO_IN.indexOf(c) >= 0) html += '<td class="num">' + esc(fmtRatio(v)) + '</td>';
+      else if (MONEY_IN.indexOf(c) >= 0) html += '<td class="num">' + esc(fmtMoney(v)) + '</td>';
+      else html += '<td>' + esc(v) + '</td>';
+    }
+    html += '</tr>';
+  }
+  html += '</tbody></table>';
+  document.getElementById('preview-wrap').innerHTML = html;
+  document.getElementById('preview-count').textContent =
+    '共 ' + dataRows.length + ' 筆資料、' + rawHeader.length + ' 個欄位（系統校準使用前 ' + IN_COLS + ' 欄）';
+}
+
+/* ========== 嚴重度換算 ========== */
+function clip(x) { return Math.max(0, Math.min(1, x)); }
+function axLo(ax) {
+  if (ax.kind === 'ratio') return ax.lo;
+  if (ax.thr === null) return A.pLo;
+  var m = effMoneyLo();
+  return m === null ? ax.thr : m;
+}
+function axHi(ax) {
+  if (ax.kind === 'ratio') return ax.hi === null ? effJHi() : ax.hi;
+  if (ax.thr === null) return A.pHi;
+  return A.moneyHi;
+}
+// {s, pinLo, pinHi}
+function sev(ax, v) {
+  var x = ax.get(v);
+  if (x === null || x === undefined) return { s:0, pinLo:false, pinHi:false };
+  var lo = axLo(ax), hi = axHi(ax);
+  if (ax.kind === 'ratio') {
+    var up = hi > lo;
+    return { s: clip((x - lo) / (hi - lo)),
+             pinLo: up ? x <= lo : x >= lo,
+             pinHi: up ? x >= hi : x <= hi };
+  }
+  return { s: clip(Math.log(Math.max(x, lo) / lo) / Math.log(hi / lo)), pinLo: x <= lo, pinHi: x >= hi };
+}
+function scoreOf(dim, v) {
+  if (dim.fixed !== undefined) return dim.fixed;
+  var ss = dim.axes.map(function (ax) { return sev(ax, v); });
+  var s;
+  if (dim.axes.length === 1) s = ss[0].s;
+  else {
+    var ri = 0, mi = 1;
+    for (var i=0;i<dim.axes.length;i++) { if (dim.axes[i].kind==='ratio') ri=i; else mi=i; }
+    s = A.w * ss[ri].s + (1 - A.w) * ss[mi].s;
+  }
+  return 1 + 9 * s;
+}
+
+/* ========== 計算 ========== */
+function poolOf(dim) {
+  return CASES.filter(function (c) { return c.jt === dim.jt && dim.hit(c.v); });
+}
+function stat(arr) {
+  if (!arr.length) return null;
+  var s = arr.slice().sort(function (a, b) { return a - b; });
+  var q = function (p) { var i = (s.length - 1) * p; var lo = Math.floor(i), hi = Math.ceil(i);
+    return lo === hi ? s[lo] : s[lo] + (s[hi] - s[lo]) * (i - lo); };
+  return { n: s.length, min: s[0], p25: q(0.25), p50: q(0.5), p75: q(0.75), p95: q(0.95), max: s[s.length - 1],
+           avg: s.reduce(function (a, b) { return a + b; }, 0) / s.length };
+}
+function compute() {
+  var out = { pools: {}, A: {}, C1: {}, pins: [], totals: [], byCase: [] };
+  var tot = CASES.map(function () { return 0; });
+  for (var d = 0; d < SCORE_DIMS.length; d++) {
+    var dim = SCORE_DIMS[d];
+    var idx = [];
+    for (var i = 0; i < CASES.length; i++) if (CASES[i].jt === dim.jt && dim.hit(CASES[i].v)) idx.push(i);
+    out.pools[dim.id] = idx;
+    out.A[dim.id] = idx.length;
+    if (!idx.length) continue;
+    var scores = idx.map(function (i) { return scoreOf(dim, CASES[i].v); });
+    idx.forEach(function (i, k) { tot[i] += scores[k]; });
+    out.C1[dim.id] = stat(scores);
+    if (dim.axes) dim.axes.forEach(function (ax) {
+      var rs = idx.map(function (i) { return sev(ax, CASES[i].v); });
+      out.pins.push({ dim: dim.id, ax: ax, label: ax.label,
+        n: idx.length,
+        pinHi: rs.filter(function (x) { return x.pinHi; }).length,
+        pinLo: rs.filter(function (x) { return x.pinLo; }).length });
+    });
+  }
+  out.totals = tot;
+  return out;
+}
+// 跨軸去重的貼頂案件數（僅金額軸），供指定上錨試算
+function pinHiCaseCount(moneyHi) {
+  var save = A.moneyHi; A.moneyHi = moneyHi;
+  var set = {};
+  for (var d = 0; d < SCORE_DIMS.length; d++) {
+    var dim = SCORE_DIMS[d]; if (!dim.axes) continue;
+    for (var i = 0; i < CASES.length; i++) {
+      if (CASES[i].jt !== dim.jt || !dim.hit(CASES[i].v)) continue;
+      for (var a = 0; a < dim.axes.length; a++) {
+        var ax = dim.axes[a];
+        if (ax.kind === 'money' && ax.thr !== null && sev(ax, CASES[i].v).pinHi) set[i] = 1;
+      }
+    }
+  }
+  A.moneyHi = save;
+  return Object.keys(set).length;
+}
+
+/* ========== ③ 參數輸入 ========== */
+var GUIDE_HTML =
+'<b>操作要領</b>（請依序執行，邊調邊看下方 ④-C1 的「各維度分數統計」）\n\n' +
+'<b>目標：讓每一個維度的分數都合理鋪開在 1~10 之間。</b>分數若全擠在低分區，代表錨點沒設好，\n' +
+'　　　不是案件都沒問題。\n\n' +
+'<b>第1步</b>　看 ④-B-1 的「貼底案件數」。若某個金額軸有很多案件貼底（該軸得 0 分、完全不\n' +
+'　　　　提供資訊），把「金額下錨」切成「自訂統一值」，往下調到貼底案件數接近 0。\n' +
+'<b>第2步</b>　看 ④-B-2 的候選上錨對照表，找出各軸貼頂數<b>全部為 0 的最小金額上錨</b>，把\n' +
+'　　　　「金額上錨」設為<b>該值的 2 倍</b>。留餘裕是刻意的——錨點一旦定案就不該再改，否則\n' +
+'　　　　前後期分數無法比較；上錨設高只會讓分數偏低，不影響同一期內的排序。\n' +
+'<b>第3步</b>　用同樣方式，看 ④-B-3 決定「待平衡支付值下錨」、看 ④-B-4 決定其上錨。\n' +
+'<b>第4步</b>　看 ④-B-4 最後幾列，用同樣方式決定「結匯率上錨」。\n' +
+'<b>第5步</b>　回頭看 ④-C1。每個維度的分數最高值應該接近 8~10、最低值接近 1~3。若某維度\n' +
+'　　　　最高值只有 6 上下，表示該維度的錨點還是太寬，回第1、2步再調。\n' +
+'<b>第6步</b>　權重 w 維持 0.5 即可。想看「比率與金額誰主導」的影響時再調。\n\n' +
+'<b>註</b>　雙軸維度（1-3/1-4、1-7/1-8、2-3/2-4、2-7/2-8、2-2、1-5、2-5）因為要兩軸同時嚴重\n' +
+'　　才拿高分，分數天花板本來就比單軸維度低，不必勉強調到 10。';
+
+function renderParamInputs() {
+  document.getElementById('guide').innerHTML = GUIDE_HTML;
+  var html = '';
+  for (var i = 0; i < ANCHOR_DEFS.length; i++) {
+    var d = ANCHOR_DEFS[i];
+    html += '<div class="param-box"><label for="anc-' + d.key + '">' + esc(d.label) + '</label>';
+    if (d.kind === 'select') {
+      html += '<select id="anc-' + d.key + '">';
+      for (var j = 0; j < d.opts.length; j++)
+        html += '<option value="' + d.opts[j][0] + '"' + (A[d.key] === d.opts[j][0] ? ' selected' : '') + '>' + esc(d.opts[j][1]) + '</option>';
+      html += '</select>';
+    } else {
+      var step = d.kind === 'w' ? '0.05' : (d.kind === 'pct' ? '1' : '1');
+      html += '<input type="number" id="anc-' + d.key + '" value="' + A[d.key] + '" step="' + step + '" min="0">';
+    }
+    html += '<div class="echo" id="echo-' + d.key + '"></div>';
+    html += '<div class="hint">' + esc(d.hint) + '</div></div>';
+  }
+  document.getElementById('param-grid').innerHTML = html;
+  for (var k = 0; k < ANCHOR_DEFS.length; k++) {
+    (function (d) {
+      var el = document.getElementById('anc-' + d.key);
+      el.addEventListener('input', function () { readAnchors(); recompute(); });
+      el.addEventListener('change', function () { readAnchors(); recompute(); });
+    })(ANCHOR_DEFS[k]);
+  }
+}
+function readAnchors() {
+  for (var i = 0; i < ANCHOR_DEFS.length; i++) {
+    var d = ANCHOR_DEFS[i], el = document.getElementById('anc-' + d.key);
+    if (!el) continue;
+    if (d.kind === 'select') { A[d.key] = el.value; continue; }
+    var n = parseFloat(el.value);
+    // w 允許 0（＝金額軸獨占）；其餘錨點必須為正數（取對數）
+    if (!isNaN(n) && (d.kind === 'w' ? n >= 0 : n > 0)) A[d.key] = n;
+  }
+  if (A.w > 1) A.w = 1;
+  document.getElementById('anc-moneyLo').disabled = (A.moneyLoMode !== 'custom');
+}
+function renderEchos() {
+  var e = function (k, t) { var el = document.getElementById('echo-' + k); if (el) el.textContent = t; };
+  e('moneyHi', '＝ ' + fmtShort(A.moneyHi) + ' 美元');
+  e('moneyLoMode', A.moneyLoMode === 'custom' ? '目前：自訂 ' + fmtShort(A.moneyLo) + ' 美元' : '目前：各控制點門檻（300萬～1億不等）');
+  e('moneyLo', A.moneyLoMode === 'custom' ? '＝ ' + fmtShort(A.moneyLo) + ' 美元' : '（未啟用）');
+  e('pLo', '＝ ' + fmtShort(A.pLo) + ' 美元');
+  e('pHi', '＝ ' + fmtShort(A.pHi) + ' 美元');
+  e('jHi', '＝ 結匯率 ' + A.jHi + '%');
+  e('w', '比率軸 ' + (A.w * 100).toFixed(0) + '%／金額軸 ' + ((1 - A.w) * 100).toFixed(0) + '%');
+}
+document.getElementById('btn-reset').addEventListener('click', function () {
+  resetAnchors();
+  renderParamInputs();
+  recompute();
+});
+
+/* ========== ④ 呈現 ========== */
+var UP_CANDS = [1e8, 3e8, 5e8, 1e9, 2e9, 5e9, 1e10, 2e10, 5e10, 1e11];
+var LO_CANDS = [1e4, 1e5, 1e6, 3e6, 1e7, 3e7];
+var PHI_CANDS = [1e6, 5e6, 1e7, 5e7, 1e8, 5e8];
+var PLO_CANDS = [1e4, 5e4, 1e5, 5e5, 1e6];
+var J_CANDS = [1.1, 1.2, 1.3, 1.5, 2.0];
+var f2 = function (x) { return x.toFixed(2); };
+
+function moneyAxes() {   // 一般金額軸（不含 P 軸）
+  var out = [];
+  SCORE_DIMS.forEach(function (dim) {
+    if (!dim.axes) return;
+    dim.axes.forEach(function (ax) { if (ax.kind === 'money' && ax.thr !== null) out.push({ dim: dim, ax: ax }); });
+  });
+  return out;
+}
+function pAxes() {
+  var out = [];
+  SCORE_DIMS.forEach(function (dim) {
+    if (!dim.axes) return;
+    dim.axes.forEach(function (ax) { if (ax.kind === 'money' && ax.thr === null) out.push({ dim: dim, ax: ax }); });
+  });
+  return out;
+}
+function jAxes() {
+  var out = [];
+  SCORE_DIMS.forEach(function (dim) {
+    if (!dim.axes) return;
+    dim.axes.forEach(function (ax) { if (ax.kind === 'ratio' && ax.hi === null) out.push({ dim: dim, ax: ax }); });
+  });
+  return out;
+}
+// 以暫時覆寫的錨點，算某軸的貼頂／貼底數
+function pinCount(dim, ax, over, which) {
+  var save = {}, k;
+  for (k in over) { save[k] = A[k]; A[k] = over[k]; }
+  var n = 0, pool = RES.pools[dim.id];
+  for (var i = 0; i < pool.length; i++) {
+    var r = sev(ax, CASES[pool[i]].v);
+    if (which === 'hi' ? r.pinHi : r.pinLo) n++;
+  }
+  for (k in over) A[k] = save[k];
+  return n;
+}
+
+function renderA() {
+  var h = '<table><thead><tr><th>類別</th><th>維度</th><th>內容</th><th>命中案件數</th></tr></thead><tbody>';
+  SCORE_DIMS.forEach(function (d) {
+    h += '<tr><td class="ctr">' + d.cat + '</td><td class="ctr">' + d.id + '</td><td style="white-space:normal;">' + esc(d.name) +
+      (d.fixed !== undefined ? '　<i style="color:#8a94a3;">（固定 10 分）</i>' : '') + '</td>' +
+      '<td class="num">' + RES.A[d.id] + '</td></tr>';
+  });
+  var nScored = RES.totals.filter(function (x) { return x > 0; }).length;
+  h += '<tr class="grp-row"><td colspan="3">有分數案件數（至少命中 1 個維度）</td><td class="num">' + nScored + '</td></tr>';
+  h += '<tr class="grp-row"><td colspan="3">未命中任何維度（總分 0）</td><td class="num">' + (CASES.length - nScored) + '</td></tr>';
+  h += '<tr class="grp-row"><td colspan="3">全部案件數</td><td class="num">' + CASES.length + '</td></tr>';
+  h += '</tbody></table>';
+  document.getElementById('wrap-a').innerHTML = h;
+}
+
+function renderB1() {
+  var h = '<table><thead><tr><th>維度</th><th>評分軸</th><th>種類</th><th>命中案數</th>' +
+    '<th>目前下錨</th><th>貼底案數</th><th>目前上錨</th><th>貼頂案數</th></tr></thead><tbody>';
+  RES.pins.forEach(function (p) {
+    var lo = axLo(p.ax), hi = axHi(p.ax);
+    var isM = p.ax.kind === 'money';
+    var fmt = isM ? fmtShort : function (x) { return (x * 100).toFixed(0) + '%'; };
+    h += '<tr><td class="ctr">' + p.dim + '</td><td>' + esc(p.label) + '</td>' +
+      '<td class="ctr">' + (isM ? '金額' : '比率') + '</td>' +
+      '<td class="num">' + p.n + '</td>' +
+      '<td class="num">' + fmt(lo) + '</td>' +
+      '<td class="num ' + (p.pinLo ? 'pin-bad' : 'pin-ok') + '">' + p.pinLo + '</td>' +
+      '<td class="num">' + fmt(hi) + '</td>' +
+      '<td class="num ' + (p.pinHi ? 'pin-bad' : 'pin-ok') + '">' + p.pinHi + '</td></tr>';
+  });
+  h += '</tbody></table>';
+  var dedup = pinHiCaseCount(A.moneyHi);
+  h += '<div class="count-line">目前金額上錨 ' + fmtShort(A.moneyHi) + ' 之下，跨軸去重的貼頂案件數＝<b>' + dedup + '</b> 案。</div>';
+  document.getElementById('wrap-b1').innerHTML = h;
+}
+
+function renderB2() {
+  var axs = moneyAxes();
+  var h = '<table><thead><tr><th>候選金額上錨</th>';
+  axs.forEach(function (x) { h += '<th>' + x.dim.id + '<br>' + esc(x.ax.label) + '</th>'; });
+  h += '<th>跨軸去重<br>貼頂案數</th></tr></thead><tbody>';
+  var allZeroAt = null;
+  UP_CANDS.forEach(function (cand) {
+    var cells = axs.map(function (x) { return pinCount(x.dim, x.ax, { moneyHi: cand }, 'hi'); });
+    var sum = cells.reduce(function (a, b) { return a + b; }, 0);
+    if (sum === 0 && allZeroAt === null) allZeroAt = cand;
+    h += '<tr><td class="num"><b>' + fmtShort(cand) + '</b></td>';
+    cells.forEach(function (n) { h += '<td class="num ' + (n ? 'pin-bad' : 'pin-ok') + '">' + n + '</td>'; });
+    h += '<td class="num">' + pinHiCaseCount(cand) + '</td></tr>';
+  });
+  h += '</tbody></table>';
+  if (allZeroAt === null) {
+    h += '<div class="alert alert-danger" style="margin-top:10px;">🛑 <b>所有候選上錨都仍有貼頂</b>，' +
+      '表示本期最大金額超過最高候選（' + fmtShort(UP_CANDS[UP_CANDS.length - 1]) + '）。' +
+      '請直接在③的「金額上錨」欄位自行填入更大的數字，再看 B-1 的貼頂案數是否歸零。</div>';
+  } else {
+    h += '<div class="alert alert-ok" style="margin-top:10px;">✓ <b>' + fmtShort(allZeroAt) + '</b> 是各軸貼頂皆為 0 的最小候選上錨。' +
+      '依操作要領第2步，建議把「金額上錨」設為其 2 倍＝<b>' + fmtShort(allZeroAt * 2) + '</b>。</div>';
+  }
+  document.getElementById('wrap-b2').innerHTML = h;
+}
+
+function renderB3() {
+  var axs = moneyAxes();
+  var h = '<div class="sub-note">「用各控制點門檻」為預設。若某軸貼底案數偏高，可改用自訂統一下錨。</div>';
+  h += '<table><thead><tr><th>候選金額下錨</th>';
+  axs.forEach(function (x) { h += '<th>' + x.dim.id + '<br>' + esc(x.ax.label) + '</th>'; });
+  h += '</tr></thead><tbody>';
+  h += '<tr><td class="num"><b>用各控制點門檻</b></td>';
+  axs.forEach(function (x) {
+    var n = pinCount(x.dim, x.ax, { moneyLoMode: 'thr' }, 'lo');
+    h += '<td class="num ' + (n ? 'pin-bad' : 'pin-ok') + '">' + n + '</td>';
+  });
+  h += '</tr>';
+  LO_CANDS.forEach(function (cand) {
+    h += '<tr><td class="num"><b>' + fmtShort(cand) + '</b></td>';
+    axs.forEach(function (x) {
+      var n = pinCount(x.dim, x.ax, { moneyLoMode: 'custom', moneyLo: cand }, 'lo');
+      h += '<td class="num ' + (n ? 'pin-bad' : 'pin-ok') + '">' + n + '</td>';
+    });
+    h += '</tr>';
+  });
+  h += '</tbody></table>';
+  document.getElementById('wrap-b3').innerHTML = h;
+}
+
+function renderB4() {
+  var pa = pAxes(), ja = jAxes();
+  var h = '<table><thead><tr><th>參數</th><th>候選值</th>';
+  var cols = pa.concat(ja);
+  cols.forEach(function (x) { h += '<th>' + x.dim.id + '<br>' + esc(x.ax.label) + '</th>'; });
+  h += '</tr></thead><tbody>';
+  PLO_CANDS.forEach(function (cand, i) {
+    h += '<tr>' + (i === 0 ? '<td class="ctr" rowspan="' + PLO_CANDS.length + '">待平衡支付值<br><b>下錨</b>（貼底案數）</td>' : '') +
+      '<td class="num"><b>' + fmtShort(cand) + '</b></td>';
+    cols.forEach(function (x) {
+      if (x.ax.thr !== null) { h += '<td class="ctr">—</td>'; return; }
+      var n = pinCount(x.dim, x.ax, { pLo: cand }, 'lo');
+      h += '<td class="num ' + (n ? 'pin-bad' : 'pin-ok') + '">' + n + '</td>';
+    });
+    h += '</tr>';
+  });
+  PHI_CANDS.forEach(function (cand, i) {
+    h += '<tr>' + (i === 0 ? '<td class="ctr" rowspan="' + PHI_CANDS.length + '">待平衡支付值<br><b>上錨</b>（貼頂案數）</td>' : '') +
+      '<td class="num"><b>' + fmtShort(cand) + '</b></td>';
+    cols.forEach(function (x) {
+      if (x.ax.thr !== null) { h += '<td class="ctr">—</td>'; return; }
+      var n = pinCount(x.dim, x.ax, { pHi: cand }, 'hi');
+      h += '<td class="num ' + (n ? 'pin-bad' : 'pin-ok') + '">' + n + '</td>';
+    });
+    h += '</tr>';
+  });
+  J_CANDS.forEach(function (cand, i) {
+    h += '<tr>' + (i === 0 ? '<td class="ctr" rowspan="' + J_CANDS.length + '">結匯率<br><b>上錨</b>（貼頂案數）</td>' : '') +
+      '<td class="num"><b>' + (cand * 100).toFixed(0) + '%</b></td>';
+    cols.forEach(function (x) {
+      if (x.ax.kind !== 'ratio') { h += '<td class="ctr">—</td>'; return; }
+      var n = pinCount(x.dim, x.ax, { jHi: cand * 100 }, 'hi');
+      h += '<td class="num ' + (n ? 'pin-bad' : 'pin-ok') + '">' + n + '</td>';
+    });
+    h += '</tr>';
+  });
+  h += '</tbody></table>';
+  document.getElementById('wrap-b4').innerHTML = h;
+}
+
+function renderC1() {
+  var h = '<table><thead><tr><th>類別</th><th>維度</th><th>軸數</th><th>案數</th><th>最低分</th><th>最高分</th><th>平均分</th><th>鋪開情形</th></tr></thead><tbody>';
+  SCORE_DIMS.forEach(function (d) {
+    var c = RES.C1[d.id];
+    if (!c) { h += '<tr><td class="ctr">' + d.cat + '</td><td class="ctr">' + d.id + '</td><td class="ctr">—</td>' +
+      '<td class="num">0</td><td colspan="4" class="ctr" style="color:#8a94a3;">本期無案件命中</td></tr>'; return; }
+    var nax = d.fixed !== undefined ? '固定' : d.axes.length + ' 軸';
+    var judge, cls = '';
+    if (d.fixed !== undefined) judge = '—';
+    else if (c.n === 1) { judge = '僅 1 案，無從判斷'; }
+    else if (c.max < 6) { judge = '偏窄，錨點可能太寬'; cls = ' class="pin-bad"'; }
+    else if (c.max >= 8 && c.min <= 3) judge = '良好';
+    else judge = '尚可';
+    h += '<tr><td class="ctr">' + d.cat + '</td><td class="ctr">' + d.id + '</td><td class="ctr">' + nax + '</td>' +
+      '<td class="num">' + c.n + '</td><td class="num">' + f2(c.min) + '</td><td class="num">' + f2(c.max) + '</td>' +
+      '<td class="num">' + f2(c.avg) + '</td><td' + cls + ' style="white-space:normal;">' + judge + '</td></tr>';
+  });
+  h += '</tbody></table>';
+  document.getElementById('wrap-c1').innerHTML = h;
+}
+
+function renderC2() {
+  var tv = RES.totals;
+  var h = '<table><thead><tr><th>總分區間</th><th>案件數</th></tr></thead><tbody>';
+  h += '<tr><td class="ctr">0 分（未命中任何維度）</td><td class="num">' + tv.filter(function (x) { return x === 0; }).length + '</td></tr>';
+  for (var lo = 1; lo <= 61; lo += 10) {
+    var hi = lo + 9;
+    var n = tv.filter(function (x) { return x >= lo && x < hi + 1; }).length;
+    h += '<tr><td class="ctr">' + lo + '–' + hi + ' 分</td><td class="num">' + n + '</td></tr>';
+  }
+  h += '<tr class="grp-row"><td class="ctr">本期最高總分</td><td class="num">' + f2(Math.max.apply(null, tv)) + '</td></tr>';
+  h += '<tr class="grp-row"><td class="ctr">理論上限（單案最多命中 7 個維度）</td><td class="num">70.00</td></tr>';
+  h += '</tbody></table>';
+  document.getElementById('wrap-c2').innerHTML = h;
+}
+
+function render21() {
+  var dim = null;
+  for (var i = 0; i < SCORE_DIMS.length; i++) if (SCORE_DIMS[i].id === '2-1') dim = SCORE_DIMS[i];
+  var pool = RES.pools['2-1'];
+  var h = '<table><thead><tr><th>評分方式</th><th>案數</th><th>最低分</th><th>最高分</th><th>平均分</th></tr></thead><tbody>';
+  h += '<tr><td>現行：命中即 10 分</td><td class="num">' + pool.length + '</td>' +
+    (pool.length ? '<td class="num">10.00</td><td class="num">10.00</td><td class="num">10.00</td>' : '<td colspan="3" class="ctr">—</td>') + '</tr>';
+  if (pool.length) {
+    var lo = effMoneyLo() === null ? P.p_zw1_a : effMoneyLo();
+    var sc = pool.map(function (i) {
+      var I = CASES[i].v.I;
+      return 1 + 9 * clip(Math.log(Math.max(I, lo) / lo) / Math.log(A.moneyHi / lo));
+    });
+    var st = stat(sc);
+    h += '<tr><td>試算：隨累計結匯值計分（下錨 ' + fmtShort(lo) + '、上錨 ' + fmtShort(A.moneyHi) + '、對數）</td>' +
+      '<td class="num">' + st.n + '</td><td class="num">' + f2(st.min) + '</td><td class="num">' + f2(st.max) + '</td><td class="num">' + f2(st.avg) + '</td></tr>';
+  }
+  h += '</tbody></table>';
+  document.getElementById('wrap-21').innerHTML = h;
+}
+
+function renderD() {
+  var h = '<table><thead><tr><th>維度</th><th>評分軸</th><th>案數</th><th>最小</th><th>P25</th><th>中位數</th><th>P75</th><th>P95</th><th>最大</th></tr></thead><tbody>';
+  SCORE_DIMS.forEach(function (dim) {
+    if (!dim.axes) return;
+    var pool = RES.pools[dim.id];
+    if (!pool.length) return;
+    dim.axes.forEach(function (ax) {
+      var vals = pool.map(function (i) { return ax.get(CASES[i].v); }).filter(function (x) { return x !== null && x !== undefined; });
+      var st = stat(vals);
+      if (!st) return;
+      var f = ax.kind === 'money' ? function (x) { return fmtMoney(x); } : function (x) { return (x * 100).toFixed(2) + '%'; };
+      h += '<tr><td class="ctr">' + dim.id + '</td><td>' + esc(ax.label) + '</td><td class="num">' + st.n + '</td>' +
+        '<td class="num">' + f(st.min) + '</td><td class="num">' + f(st.p25) + '</td><td class="num">' + f(st.p50) + '</td>' +
+        '<td class="num">' + f(st.p75) + '</td><td class="num">' + f(st.p95) + '</td><td class="num">' + f(st.max) + '</td></tr>';
+    });
+  });
+  h += '</tbody></table>';
+  document.getElementById('wrap-d').innerHTML = h;
+}
+
+function renderFinal() {
+  var rows = [
+    ['金額上錨', fmtShort(A.moneyHi) + ' 美元', A.moneyHi],
+    ['金額下錨', A.moneyLoMode === 'custom' ? fmtShort(A.moneyLo) + ' 美元' : '用各控制點門檻', A.moneyLoMode === 'custom' ? A.moneyLo : '門檻'],
+    ['待平衡支付值下錨', fmtShort(A.pLo) + ' 美元', A.pLo],
+    ['待平衡支付值上錨', fmtShort(A.pHi) + ' 美元', A.pHi],
+    ['結匯率上錨', A.jHi + ' %', A.jHi],
+    ['雙軸權重 w', A.w.toFixed(2) + '（比率軸占比）', A.w]
+  ];
+  var h = '';
+  rows.forEach(function (r) {
+    h += '<tr><th>' + esc(r[0]) + '</th><td>' + esc(r[1]) + '</td></tr>';
+  });
+  document.getElementById('final-params').innerHTML = h;
+  return rows;
+}
+
+function recompute() {
+  readAnchors();
+  RES = compute();
+  renderEchos();
+  renderA(); renderB1(); renderB2(); renderB3(); renderB4();
+  renderC1(); renderC2(); render21(); renderD(); renderFinal();
+}
+
+/* ========== ⑥ 下載 ========== */
+function aoaFromTable(id) {
+  // 由已渲染的表格轉 AOA（確保匯出與畫面一致）
+  var t = document.querySelector('#' + id + ' table');
+  if (!t) return [];
+  var out = [];
+  var trs = t.querySelectorAll('tr');
+  for (var i = 0; i < trs.length; i++) {
+    var row = [], cs = trs[i].children;
+    for (var j = 0; j < cs.length; j++) {
+      var span = parseInt(cs[j].getAttribute('colspan') || '1', 10);
+      var txt = cs[j].innerText.replace(/\s*\n\s*/g, ' ').trim();
+      var n = num(txt.replace(/,/g, ''));
+      row.push(n !== null && /^-?[\d,]+(\.\d+)?$/.test(txt.replace(/,/g, '')) ? n : txt);
+      for (var s = 1; s < span; s++) row.push('');
+    }
+    out.push(row);
+  }
+  return out;
+}
+function buildCalibSheets() {
+  var params = renderFinal();
+  var sheets = [];
+  var pAoa = [['錨點校準結果'], ['產生日期', todayStr()], ['資料筆數', CASES.length], [],
+              ['參數', '設定值', '原始值']];
+  params.forEach(function (r) { pAoa.push([r[0], r[1], r[2]]); });
+  pAoa.push([], ['說明'], ['本表為錨點校準工具 v1150717 之輸出。'],
+    ['A、C 區為純計數與分數統計，不含金額。'],
+    ['B 區雖為案件數，但候選錨點對照會以級距反映金額範圍。'],
+    ['D 區含真實金額，僅在勾選時納入。']);
+  sheets.push({ name: '本次參數設定', aoa: pAoa });
+  sheets.push({ name: 'A命中案件數', aoa: aoaFromTable('wrap-a') });
+  sheets.push({ name: 'B1錨點適配', aoa: aoaFromTable('wrap-b1') });
+  sheets.push({ name: 'B2候選上錨', aoa: aoaFromTable('wrap-b2') });
+  sheets.push({ name: 'B3候選下錨', aoa: aoaFromTable('wrap-b3') });
+  sheets.push({ name: 'B4支付值與結匯率', aoa: aoaFromTable('wrap-b4') });
+  sheets.push({ name: 'C1各維度分數', aoa: aoaFromTable('wrap-c1') });
+  sheets.push({ name: 'C2總分分布', aoa: aoaFromTable('wrap-c2') });
+  sheets.push({ name: '2-1試算', aoa: aoaFromTable('wrap-21') });
+  if (document.getElementById('chk-d').checked)
+    sheets.push({ name: 'D精確金額分布', aoa: aoaFromTable('wrap-d') });
+  return sheets;
+}
+function downloadSheets(sheets, fileName) {
+  var wb = XLSX.utils.book_new();
+  sheets.forEach(function (s) {
+    XLSX.utils.book_append_sheet(wb, XLSX.utils.aoa_to_sheet(s.aoa), s.name);
+  });
+  XLSX.writeFile(wb, fileName);
+}
+document.getElementById('btn-dl').addEventListener('click', function () {
+  if (!RES) return;
+  if (document.getElementById('chk-d').checked &&
+      !confirm('你勾選了「包含 D 區精確金額分布」。\n\n該區含由真實管制表算出的金額（最大值、百分位數等）。\n請確認此輸出符合貴單位的攜出規定。\n\n仍要包含嗎？')) return;
+  downloadSheets(buildCalibSheets(), todayStr() + '錨點校準結果.xlsx');
+});
+document.getElementById('btn-print').addEventListener('click', function () { window.print(); });
+</script>
+</body>
+</html>
