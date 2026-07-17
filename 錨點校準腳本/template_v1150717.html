@@ -98,6 +98,29 @@
   .param-box select { text-align: left; }
   .param-box .hint { font-size: 11.5px; color: #8a94a3; margin-top: 5px; line-height: 1.5; }
   .param-box .echo { font-size: 12px; color: #2e7d32; margin-top: 4px; }
+  .param-box .sugg { font-size: 12.5px; color: #1f4e79; margin-top: 4px; font-weight: bold; }
+  .param-box .sugg.same { color: #8a94a3; font-weight: normal; }
+  /* 建議面板 */
+  .suggest-panel {
+    background: #e9f6ea; border: 1px solid #9ccb9f; border-left: 4px solid #2e7d32;
+    border-radius: 6px; padding: 14px 18px; margin-bottom: 16px;
+  }
+  .suggest-panel h3 { font-size: 15px; color: #226b28; margin-bottom: 4px; }
+  .suggest-panel .lead { font-size: 12.5px; color: #4a6076; margin-bottom: 10px; line-height: 1.6; }
+  table.suggest-table { width: 100%; font-size: 13px; white-space: normal; background: #fff; }
+  table.suggest-table th { background: #2e7d32; color: #fff; font-weight: normal; position: static; }
+  table.suggest-table td { border: 1px solid #cfe3d0; vertical-align: top; }
+  table.suggest-table td.val { font-weight: bold; color: #12395c; white-space: nowrap; font-variant-numeric: tabular-nums; }
+  table.suggest-table td.cur { color: #6b7a90; white-space: nowrap; font-variant-numeric: tabular-nums; }
+  table.suggest-table td.why { font-size: 12px; color: #4a6076; line-height: 1.55; }
+  table.suggest-table tr.diff td.val { background: #fff6e0; }
+  .compromise {
+    background: #fff6e0; border: 1px solid #e8c766; border-radius: 6px;
+    padding: 10px 14px; margin-top: 12px; font-size: 12.5px; color: #8a6100; line-height: 1.7;
+  }
+  .compromise table { width: auto; font-size: 12px; margin: 6px 0; background: #fff; white-space: nowrap; }
+  .compromise th { background: #e8c766; color: #6b4e00; font-weight: normal; position: static; }
+  .compromise td { border: 1px solid #e8c766; padding: 3px 10px; }
   .sub-title { font-size: 15px; font-weight: bold; color: #1f4e79; margin: 18px 0 8px; }
   .sub-title:first-child { margin-top: 0; }
   .sub-note { font-size: 12.5px; color: #6b7a90; margin-bottom: 8px; line-height: 1.6; }
@@ -181,10 +204,12 @@
   <div class="section hidden no-print" id="sec-params">
     <div class="section-title"><span class="step-badge">3</span>調整參數（金額單位：美元）</div>
     <div class="guide" id="guide"></div>
+    <div class="suggest-panel" id="suggest-panel"></div>
     <div class="param-grid" id="param-grid"></div>
     <div class="btn-row">
+      <button class="btn btn-green" id="btn-apply-suggest">套用全部建議值</button>
       <button class="btn btn-gray" id="btn-reset">還原預設值</button>
-      <span class="sub-note" style="margin:0;">改動任一欄位，下方④會立即重算。</span>
+      <span class="sub-note" style="margin:0;">改動任一欄位，下方④會立即重算。建議值只依上傳的資料計算，不會隨你調整而變動。</span>
     </div>
   </div>
 
@@ -689,21 +714,29 @@ function pinHiCaseCount(moneyHi) {
 
 /* ========== ③ 參數輸入 ========== */
 var GUIDE_HTML =
-'<b>操作要領</b>（請依序執行，邊調邊看下方 ④-C1 的「各維度分數統計」）\n\n' +
-'<b>目標：讓每一個維度的分數都合理鋪開在 1~10 之間。</b>分數若全擠在低分區，代表錨點沒設好，\n' +
-'　　　不是案件都沒問題。\n\n' +
-'<b>第1步</b>　看 ④-B-1 的「貼底案件數」。若某個金額軸有很多案件貼底（該軸得 0 分、完全不\n' +
-'　　　　提供資訊），把「金額下錨」切成「自訂統一值」，往下調到貼底案件數接近 0。\n' +
-'<b>第2步</b>　看 ④-B-2 的候選上錨對照表，找出各軸貼頂數<b>全部為 0 的最小金額上錨</b>，把\n' +
-'　　　　「金額上錨」設為<b>該值的 2 倍</b>。留餘裕是刻意的——錨點一旦定案就不該再改，否則\n' +
-'　　　　前後期分數無法比較；上錨設高只會讓分數偏低，不影響同一期內的排序。\n' +
-'<b>第3步</b>　用同樣方式，看 ④-B-3 決定「待平衡支付值下錨」、看 ④-B-4 決定其上錨。\n' +
-'<b>第4步</b>　看 ④-B-4 最後幾列，用同樣方式決定「結匯率上錨」。\n' +
-'<b>第5步</b>　回頭看 ④-C1。每個維度的分數最高值應該接近 8~10、最低值接近 1~3。若某維度\n' +
-'　　　　最高值只有 6 上下，表示該維度的錨點還是太寬，回第1、2步再調。\n' +
-'<b>第6步</b>　權重 w 維持 0.5 即可。想看「比率與金額誰主導」的影響時再調。\n\n' +
-'<b>註</b>　雙軸維度（1-3/1-4、1-7/1-8、2-3/2-4、2-7/2-8、2-2、1-5、2-5）因為要兩軸同時嚴重\n' +
-'　　才拿高分，分數天花板本來就比單軸維度低，不必勉強調到 10。';
+'<b>操作要領</b>\n\n' +
+'系統已依下列原則算好<b>建議值</b>（見下方綠色面板）。你可以直接按「套用全部建議值」，再視情況\n' +
+'微調。以下說明原則，以及什麼時候該推翻建議。\n\n' +
+'<b>目標：讓每一個維度的分數都合理鋪開在 1~10 之間</b>（看 ④-C1）。分數若全擠在低分區，代表\n' +
+'　　　錨點沒設好，不是案件都沒問題。\n\n' +
+'<b>兩個錨點的意思</b>\n' +
+'　<b>下錨</b>　金額低於此即視為不重大，該軸得 0 分。要取「<b>能讓貼底歸零的最大值</b>」——太高\n' +
+'　　　　會讓案件貼底（該軸完全不計分），太低則因為是對數換算，分母變大、分數反而擠在一起。\n' +
+'　<b>上錨</b>　金額達此即為最嚴重（10 分）。要取「<b>能讓貼頂歸零的最小值</b>」再乘 2。乘 2 是\n' +
+'　　　　刻意的：錨點一旦定案就不該再改（否則前後期分數無法比較），留餘裕才不會因為下期出現\n' +
+'　　　　更大的案子而被迫改。上錨設高只是壓低分數，不影響同一期內的排序。\n\n' +
+'<b>什麼時候該推翻建議</b>\n' +
+'　<b>1.</b>　套用後看 ④-C1。若某維度最高分只有 6 上下，表示該軸錨點還是太寬，把上錨往下調或\n' +
+'　　　下錨往上調，再看一次。\n' +
+'　<b>2.</b>　若出現紅字「所有候選皆貼頂」，代表本期最大金額超出候選清單，直接自己填更大的數字。\n' +
+'　<b>3.</b>　「金額下錨」是單一共用值，必然是妥協（見綠色面板的說明）。若你更在意某個維度，\n' +
+'　　　可以推翻建議、往上調到那個維度的理想值。\n\n' +
+'<b>兩個不用管的情形</b>\n' +
+'　<b>・比率軸的貼頂不用管。</b>那代表案件真的落在天然極端（差異 100%、交運/已提領 0%），本來\n' +
+'　　就該拿滿分。<b>只有金額軸的貼頂才要調。</b>\n' +
+'　<b>・雙軸維度的天花板本來就低。</b>1-3/1-4、1-7/1-8、2-3/2-4、2-7/2-8、2-2、1-5、2-5 要兩軸\n' +
+'　　同時嚴重才拿高分，不必勉強調到 10。\n' +
+'　<b>・「僅 1 案，無從判斷」不是錯誤</b>，是該維度本期命中太少，不用理它。';
 
 function renderParamInputs() {
   document.getElementById('guide').innerHTML = GUIDE_HTML;
@@ -721,6 +754,7 @@ function renderParamInputs() {
       html += '<input type="number" id="anc-' + d.key + '" value="' + A[d.key] + '" step="' + step + '" min="0">';
     }
     html += '<div class="echo" id="echo-' + d.key + '"></div>';
+    html += '<div class="sugg" id="sugg-' + d.key + '"></div>';
     html += '<div class="hint">' + esc(d.hint) + '</div></div>';
   }
   document.getElementById('param-grid').innerHTML = html;
@@ -753,6 +787,26 @@ function renderEchos() {
   e('pHi', '＝ ' + fmtShort(A.pHi) + ' 美元');
   e('jHi', '＝ 結匯率 ' + A.jHi + '%');
   e('w', '比率軸 ' + (A.w * 100).toFixed(0) + '%／金額軸 ' + ((1 - A.w) * 100).toFixed(0) + '%');
+}
+// 每個輸入框旁的建議值
+function renderSuggLines() {
+  for (var i = 0; i < ANCHOR_DEFS.length; i++) {
+    var key = ANCHOR_DEFS[i].key, el = document.getElementById('sugg-' + key);
+    if (!el) continue;
+    if (SUGG.empty) { el.textContent = ''; continue; }
+    if (key === 'moneyLoMode') {
+      var sm = SUGG.vals.moneyLoMode;
+      if (!sm) { el.textContent = ''; continue; }
+      el.textContent = '建議：' + paramText('moneyLoMode', sm);
+      el.className = 'sugg' + (A.moneyLoMode === sm ? ' same' : '');
+      continue;
+    }
+    var sv = SUGG.vals[key];
+    if (sv === undefined) { el.textContent = ''; continue; }
+    if (sv === null) { el.textContent = '建議：無法計算（見上方紅字）'; el.className = 'sugg'; continue; }
+    el.textContent = '建議：' + paramText(key, sv);
+    el.className = 'sugg' + (String(A[key]) === String(sv) ? ' same' : '');
+  }
 }
 document.getElementById('btn-reset').addEventListener('click', function () {
   resetAnchors();
@@ -792,6 +846,114 @@ function jAxes() {
   });
   return out;
 }
+/* ========== 建議值 ==========
+   規則：下錨取「貼底歸零的最大候選」，上錨取「貼頂歸零的最小候選」×2（結匯率不 ×2）。
+   全部只從候選階梯取值，不由資料直接算出——階梯值僅透露「最大值落在哪一級距」
+   （與 B-2／B-3 既有的洩漏程度相同），而「最大值×2」會等於直接公布金額。
+   建議值與目前輸入值無關：pinCount() 的 over 參數提供暫時覆寫，故不會隨調整而漂移。 */
+var SUGG = null;
+
+function firstZeroHi(axes, cands, key) {   // 貼頂歸零的最小候選
+  for (var i = 0; i < cands.length; i++) {
+    var ok = true, o = {};
+    o[key] = cands[i];
+    for (var j = 0; j < axes.length; j++)
+      if (pinCount(axes[j].dim, axes[j].ax, o, 'hi') > 0) { ok = false; break; }
+    if (ok) return cands[i];
+  }
+  return null;
+}
+function lastZeroLo(axes, cands, mk) {     // 貼底歸零的最大候選
+  var best = null;
+  for (var i = 0; i < cands.length; i++) {
+    var ok = true, o = mk(cands[i]);
+    for (var j = 0; j < axes.length; j++)
+      if (pinCount(axes[j].dim, axes[j].ax, o, 'lo') > 0) { ok = false; break; }
+    if (ok) best = cands[i];
+  }
+  return best;
+}
+// pool 為空的軸不參與建議（如演示檔的 1-6）
+function nonEmpty(list) {
+  return list.filter(function (x) { return RES.pools[x.dim.id] && RES.pools[x.dim.id].length; });
+}
+
+function recommend() {
+  var mAx = nonEmpty(moneyAxes()), pAx = nonEmpty(pAxes()), jAx = nonEmpty(jAxes());
+  var s = { vals: {}, why: {}, notes: [], perAxisLo: [], empty: false };
+
+  if (!mAx.length && !pAx.length && !jAx.length) { s.empty = true; return s; }
+
+  // 金額上錨
+  var hiBase = mAx.length ? firstZeroHi(mAx, UP_CANDS, 'moneyHi') : null;
+  if (hiBase) {
+    s.vals.moneyHi = hiBase * 2;
+    s.why.moneyHi = fmtShort(hiBase) + ' 是各金額軸貼頂皆歸零的最小候選（見 B-2）。設為其 2 倍，是為了讓下一期出現更大的案子時不必改錨點——錨點一改，前後期分數就不能比。';
+  } else if (mAx.length) {
+    s.vals.moneyHi = null;
+    s.why.moneyHi = '無法建議：所有候選上錨都仍有案件貼頂。';
+    s.notes.push({ kind: 'danger', text: '本期最大金額超過最高候選（' + fmtShort(UP_CANDS[UP_CANDS.length - 1]) + '）。請自行在「金額上錨」填入更大的數字，再看 B-1 的貼頂案數是否歸零。' });
+  }
+
+  // 金額下錨
+  var lo = mAx.length ? lastZeroLo(mAx, LO_CANDS, function (c) { return { moneyLoMode: 'custom', moneyLo: c }; }) : null;
+  if (lo) {
+    s.vals.moneyLoMode = 'custom'; s.vals.moneyLo = lo;
+    s.why.moneyLo = fmtShort(lo) + ' 是各金額軸貼底皆歸零的最大候選（見 B-3）。取「最大」而非更低的值是刻意的：下錨越低，對數換算的分母越大，分數會擠在一起。';
+  } else if (mAx.length) {
+    s.vals.moneyLoMode = 'custom'; s.vals.moneyLo = LO_CANDS[0];
+    s.why.moneyLo = '無候選能讓貼底完全歸零，暫以最小候選 ' + fmtShort(LO_CANDS[0]) + ' 為建議。';
+    s.notes.push({ kind: 'warning', text: '本期有案件金額低於最小候選（' + fmtShort(LO_CANDS[0]) + '），該軸仍會貼底。如有需要可自行填入更小的值。' });
+  }
+
+  // 待平衡支付值
+  if (pAx.length) {
+    var pl = lastZeroLo(pAx, PLO_CANDS, function (c) { return { pLo: c }; });
+    if (pl) { s.vals.pLo = pl; s.why.pLo = fmtShort(pl) + ' 是貼底歸零的最大候選（見 B-4）。'; }
+    else {
+      s.vals.pLo = PLO_CANDS[0];
+      s.why.pLo = '無候選能讓貼底歸零，暫以最小候選為建議。';
+      s.notes.push({ kind: 'warning', text: '本期有案件的待平衡支付值低於最小候選（' + fmtShort(PLO_CANDS[0]) + '），該軸仍會貼底。' });
+    }
+    var ph = firstZeroHi(pAx, PHI_CANDS, 'pHi');
+    if (ph) { s.vals.pHi = ph * 2; s.why.pHi = fmtShort(ph) + ' 是貼頂歸零的最小候選（見 B-4），×2 留跨期餘裕。'; }
+    else {
+      s.vals.pHi = null;
+      s.why.pHi = '無法建議：所有候選都仍有案件貼頂。';
+      s.notes.push({ kind: 'danger', text: '本期待平衡支付值的最大金額超過最高候選（' + fmtShort(PHI_CANDS[PHI_CANDS.length - 1]) + '）。請自行填入更大的數字。' });
+    }
+  }
+
+  // 結匯率上錨（比率有實務上界，不 ×2）
+  // 注意：A.jHi 的單位是「％」（120），effJHi() 才除以 100，故覆寫值必須是百分數
+  if (jAx.length) {
+    var jPct = J_CANDS.map(function (c) { return c * 100; });
+    var jh = firstZeroHi(jAx, jPct, 'jHi');
+    if (jh) { s.vals.jHi = jh; s.why.jHi = jh + '% 是貼頂歸零的最小候選（見 B-4 最後幾列）。比率有實務上界，不像金額需要留餘裕，故不再乘 2。'; }
+    else {
+      s.vals.jHi = null;
+      s.why.jHi = '無法建議：所有候選都仍有案件貼頂。';
+      s.notes.push({ kind: 'danger', text: '本期結匯率超過最高候選（' + jPct[jPct.length - 1] + '%）。請自行填入更大的數字。' });
+    }
+  } else {
+    // 不可回填 A.jHi —— 建議值必須只依資料，不依目前參數，否則會隨使用者調整而漂移
+    s.why.jHi = '本期無案件結匯率超過 100％（1-6／2-6 皆未命中），無資料可依據，無從建議。';
+  }
+
+  s.vals.w = 0.5;
+  s.why.w = '無資料依據可循，維持 0.5（比率軸與金額軸各半）。想看「比率與金額誰主導」時再自行調整。';
+
+  // 各軸理想下錨（供揭露單一共用值的妥協）
+  for (var i = 0; i < mAx.length; i++) {
+    var e = mAx[i];
+    s.perAxisLo.push({
+      id: e.dim.id, label: e.ax.label, thr: e.ax.thr,
+      best: lastZeroLo([e], LO_CANDS, function (c) { return { moneyLoMode: 'custom', moneyLo: c }; })
+    });
+  }
+  return s;
+}
+
 // 以暫時覆寫的錨點，算某軸的貼頂／貼底數
 function pinCount(dim, ax, over, which) {
   var save = {}, k;
@@ -804,6 +966,97 @@ function pinCount(dim, ax, over, which) {
   for (k in over) A[k] = save[k];
   return n;
 }
+
+/* ========== 建議面板 ========== */
+// 各參數的目前值／建議值文字化（同一函式供面板、param-box、匯出共用）
+function paramText(key, v) {
+  if (v === null || v === undefined) return '（無法建議）';
+  if (key === 'moneyLoMode') return v === 'custom' ? '自訂統一值' : '用各控制點門檻';
+  if (key === 'jHi') return v + ' %';
+  if (key === 'w') return Number(v).toFixed(2);
+  return fmtShort(v) + ' 美元';
+}
+var SUGG_ROWS = [
+  ['moneyHi', '金額上錨'],
+  ['moneyLo', '金額下錨（自訂統一值）'],
+  ['pLo', '待平衡支付值下錨'],
+  ['pHi', '待平衡支付值上錨'],
+  ['jHi', '結匯率上錨'],
+  ['w', '雙軸權重 w']
+];
+function curOf(key) { return key === 'moneyLo' && A.moneyLoMode !== 'custom' ? null : A[key]; }
+function curText(key) {
+  if (key === 'moneyLo' && A.moneyLoMode !== 'custom') return '用各控制點門檻';
+  return paramText(key, A[key]);
+}
+function renderSuggest() {
+  var el = document.getElementById('suggest-panel');
+  if (SUGG.empty) {
+    el.innerHTML = '<h3>系統建議值</h3><div class="lead">本期沒有任何案件命中評分維度，無從建議。請確認上傳的是正確的管制表。</div>';
+    return;
+  }
+  var h = '<h3>系統建議值（僅供參考，不會自動套用）</h3>' +
+    '<div class="lead">以下是系統依上傳資料算出的建議。你可以按下方「套用全部建議值」一次帶入，' +
+    '再視情況微調；也可以完全不理會，自己填。<b>最終要用哪些數字，由你決定。</b></div>';
+  h += '<table class="suggest-table"><thead><tr><th style="width:14em;">參數</th><th style="width:9em;">目前值</th><th style="width:9em;">建議值</th><th>依據</th></tr></thead><tbody>';
+  for (var i = 0; i < SUGG_ROWS.length; i++) {
+    var key = SUGG_ROWS[i][0], label = SUGG_ROWS[i][1];
+    var sv = SUGG.vals[key];
+    var sTxt = sv === undefined ? '—' : paramText(key, sv);
+    var cTxt = curText(key);
+    var same = (sTxt === cTxt);
+    h += '<tr' + (same || sv === undefined ? '' : ' class="diff"') + '>' +
+      '<td>' + esc(label) + '</td>' +
+      '<td class="cur">' + esc(cTxt) + '</td>' +
+      '<td class="val">' + esc(sTxt) + (same ? '　<span style="color:#8a94a3;font-weight:normal;">（同）</span>' : '') + '</td>' +
+      '<td class="why">' + esc(SUGG.why[key] || '') + '</td></tr>';
+  }
+  h += '</tbody></table>';
+
+  for (var n = 0; n < SUGG.notes.length; n++) {
+    h += '<div class="alert alert-' + SUGG.notes[n].kind + '" style="margin-top:10px;">' +
+      (SUGG.notes[n].kind === 'danger' ? '🛑 ' : '⚠️ ') + esc(SUGG.notes[n].text) + '</div>';
+  }
+
+  // 單一共用下錨的妥協必須明示，不能只給一個數字
+  if (SUGG.perAxisLo.length) {
+    var vary = false, first = SUGG.perAxisLo[0].best;
+    for (var k = 1; k < SUGG.perAxisLo.length; k++) if (SUGG.perAxisLo[k].best !== first) vary = true;
+    if (vary) {
+      h += '<div class="compromise"><b>⚠️ 關於「金額下錨」：這是一個妥協。</b><br>' +
+        '本工具用單一共用下錨，但各軸的理想下錨其實不同：<table><thead><tr><th>軸</th><th>控制點門檻</th><th>該軸理想下錨</th></tr></thead><tbody>';
+      for (var m = 0; m < SUGG.perAxisLo.length; m++) {
+        var p = SUGG.perAxisLo[m];
+        h += '<tr><td>' + esc(p.id) + '｜' + esc(p.label) + '</td><td style="text-align:right;">' + fmtShort(p.thr) +
+          '</td><td style="text-align:right;"><b>' + (p.best === null ? '—' : fmtShort(p.best)) + '</b></td></tr>';
+      }
+      h += '</tbody></table>' +
+        '建議值取其中<b>最小者</b>，確保沒有任何軸貼底；代價是理想下錨較高的那些軸，分數會略被壓縮。' +
+        '套用後請看 <b>④-C1</b>，若某維度變得太窄，可自行往上調。';
+      h += '</div>';
+    }
+  }
+  el.innerHTML = h;
+}
+document.getElementById('btn-apply-suggest').addEventListener('click', function () {
+  if (!SUGG || SUGG.empty) return;
+  var applied = [], skipped = [];
+  for (var i = 0; i < SUGG_ROWS.length; i++) {
+    var key = SUGG_ROWS[i][0], v = SUGG.vals[key];
+    if (v === undefined) continue;
+    if (v === null) { skipped.push(SUGG_ROWS[i][1]); continue; }
+    if (key === 'moneyLo' && SUGG.vals.moneyLoMode) {
+      A.moneyLoMode = SUGG.vals.moneyLoMode;
+      document.getElementById('anc-moneyLoMode').value = A.moneyLoMode;
+    }
+    A[key] = v;
+    var el = document.getElementById('anc-' + key);
+    if (el) el.value = v;
+    applied.push(SUGG_ROWS[i][1]);
+  }
+  recompute();
+  if (skipped.length) alert('已套用建議值。\n\n以下參數無法建議，維持原值，請自行填入：\n・' + skipped.join('\n・'));
+});
 
 function renderA() {
   var h = '<table><thead><tr><th>類別</th><th>維度</th><th>內容</th><th>命中案件數</th></tr></thead><tbody>';
@@ -1028,7 +1281,9 @@ function renderFinal() {
 function recompute() {
   readAnchors();
   RES = compute();
-  renderEchos();
+  // 建議只依資料計算，與目前參數無關 —— 但需 RES.pools 先備妥
+  SUGG = recommend();
+  renderEchos(); renderSuggest(); renderSuggLines();
   renderA(); renderB1(); renderB2(); renderB3(); renderB4();
   renderC1(); renderC2(); render21(); renderD(); renderFinal();
 }
@@ -1057,9 +1312,18 @@ function buildCalibSheets() {
   var params = renderFinal();
   var sheets = [];
   var pAoa = [['錨點校準結果'], ['產生日期', todayStr()], ['資料筆數', CASES.length], [],
-              ['參數', '設定值', '原始值']];
-  params.forEach(function (r) { pAoa.push([r[0], r[1], r[2]]); });
+              ['參數', '設定值', '原始值', '系統建議值', '是否採用建議']];
+  // ⑤ 的 6 列與 SUGG_ROWS 的對應（金額下錨在 ⑤ 是一列，含 mode）
+  var sKey = ['moneyHi', 'moneyLo', 'pLo', 'pHi', 'jHi', 'w'];
+  params.forEach(function (r, i) {
+    var key = sKey[i], sv = SUGG && !SUGG.empty ? SUGG.vals[key] : undefined;
+    var sTxt = (sv === undefined) ? '—' : paramText(key, sv);
+    var cTxt = (key === 'moneyLo' && A.moneyLoMode !== 'custom') ? '用各控制點門檻' : paramText(key, A[key]);
+    pAoa.push([r[0], r[1], r[2], sTxt, sTxt === '—' ? '—' : (sTxt === cTxt ? '是' : '否（已自行調整）')]);
+  });
   pAoa.push([], ['說明'], ['本表為錨點校準工具 v1150717 之輸出。'],
+    ['「設定值」是使用者最終選定的數字，即本次校準要帶回的成果。'],
+    ['「系統建議值」取自候選階梯（非由資料直接算出），供對照參考。'],
     ['A、C 區為純計數與分數統計，不含金額。'],
     ['B 區雖為案件數，但候選錨點對照會以級距反映金額範圍。'],
     ['D 區含真實金額，僅在勾選時納入。']);

@@ -190,3 +190,66 @@ const r2 = run(Object.assign({}, DEF, { moneyLo: 1e5 }));
 const a = r.C1['1-7/1-8'], b = r2.C1['1-7/1-8'];
 console.log('  下錨＝門檻(3000萬)：分數 ' + f2(a.min) + ' ~ ' + f2(a.max) + '，貼底 ' + r.pinLo['1-7/1-8｜金額'] + ' 案');
 console.log('  下錨＝10萬        ：分數 ' + f2(b.min) + ' ~ ' + f2(b.max) + '，貼底 ' + (r2.pinLo['1-7/1-8｜金額'] || 0) + ' 案');
+
+/* ================= 建議值（v1150717b） =================
+   規則：下錨取「貼底歸零的最大候選」，上錨取「貼頂歸零的最小候選」×2
+   （結匯率不 ×2）。全部只從候選階梯取值，不由資料直接算出。 */
+const UP_CANDS  = [1e8, 3e8, 5e8, 1e9, 2e9, 5e9, 1e10, 2e10, 5e10, 1e11];
+const LO_CANDS  = [1e4, 1e5, 1e6, 3e6, 1e7, 3e7];
+const PHI_CANDS = [1e6, 5e6, 1e7, 5e7, 1e8, 5e8];
+const PLO_CANDS = [1e4, 5e4, 1e5, 5e5, 1e6];
+const J_CANDS   = [1.1, 1.2, 1.3, 1.5, 2.0];
+
+// 收集各類軸（pool 為空者不參與）
+function axesOf(pick) {
+  const out = [];
+  for (const dim of DIMS) {
+    if (!dim.axes) continue;
+    const pool = CASES.filter(c => (c.jt ? 1 : 0) === dim.jt && dim.hit(c.v));
+    if (!pool.length) continue;
+    for (const ax of dim.axes) if (pick(ax)) out.push({ dim, ax, pool });
+  }
+  return out;
+}
+const MONEY_AX = axesOf(ax => ax.kind === 'money' && ax.thr !== null);
+const P_AX     = axesOf(ax => ax.kind === 'money' && ax.thr === null);
+const J_AX     = axesOf(ax => ax.kind === 'ratio' && ax.hi() === null);
+
+function pins(entry, over, which) {
+  const A2 = Object.assign({}, DEF, over);
+  return entry.pool.filter(c => {
+    const r = sev(entry.dim, entry.ax, c.v, A2);
+    return which === 'hi' ? r.pinHi : r.pinLo;
+  }).length;
+}
+// 貼頂歸零的最小候選
+const firstZeroHi = (axes, cands, key) =>
+  cands.find(c => axes.every(e => pins(e, { [key]: c }, 'hi') === 0)) || null;
+// 貼底歸零的最大候選
+const lastZeroLo = (axes, cands, over) => {
+  let best = null;
+  for (const c of cands) if (axes.every(e => pins(e, over(c), 'lo') === 0)) best = c;
+  return best;
+};
+
+const sMoneyHiBase = firstZeroHi(MONEY_AX, UP_CANDS, 'moneyHi');
+const sMoneyLo     = lastZeroLo(MONEY_AX, LO_CANDS, c => ({ moneyLo: c }));
+const sPLo         = lastZeroLo(P_AX, PLO_CANDS, c => ({ pLo: c }));
+const sPHiBase     = firstZeroHi(P_AX, PHI_CANDS, 'pHi');
+const sJHi         = firstZeroHi(J_AX, J_CANDS, 'jHi');
+
+const fm = x => x === null ? '（無法建議）' : (x >= 1e8 ? (x / 1e8) + ' 億' : (x / 1e4) + ' 萬');
+console.log('\n=== 建議值（v1150717b 預期答案）===');
+console.log('  金額上錨          ' + (sMoneyHiBase ? fm(sMoneyHiBase * 2) + '   （' + fm(sMoneyHiBase) + ' 是貼頂歸零的最小候選，×2 留餘裕）' : '（所有候選皆貼頂）'));
+console.log('  金額下錨          ' + fm(sMoneyLo) + '   （貼底歸零的最大候選，自訂模式）');
+console.log('  待平衡支付值下錨  ' + fm(sPLo) + '   （貼底歸零的最大候選）');
+console.log('  待平衡支付值上錨  ' + (sPHiBase ? fm(sPHiBase * 2) + '   （' + fm(sPHiBase) + ' ×2）' : '（所有候選皆貼頂）'));
+console.log('  結匯率上錨        ' + (sJHi ? (sJHi * 100) + '%   （貼頂歸零的最小候選，不 ×2）' : '（所有候選皆貼頂）'));
+console.log('  雙軸權重 w        0.50   （無資料依據）');
+
+console.log('\n=== 妥協佐證：各軸的理想下錨（單一共用值取其最小者）===');
+for (const e of MONEY_AX) {
+  const best = lastZeroLo([e], LO_CANDS, c => ({ moneyLo: c }));
+  console.log('  ' + (e.dim.id + '｜' + (e.ax.get === undefined ? '' : '')).padEnd(11) +
+    ' 門檻 ' + fm(e.ax.thr).padStart(7) + '   理想下錨 ' + fm(best).padStart(7));
+}

@@ -13,3 +13,6 @@ desktop.ini
 # Claude Code 的機器本地設定（不跨機器共用）
 .claude/settings.local.json
 .claude/launch.json
+
+# SheetJS（882KB 第三方檔，從 v1150715.html 抽出即可，見各腳本 README）
+xlsx.full.min.js
