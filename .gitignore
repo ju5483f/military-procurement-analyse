@@ -16,3 +16,6 @@ desktop.ini
 
 # SheetJS（882KB 第三方檔，從 v1150715.html 抽出即可，見各腳本 README）
 xlsx.full.min.js
+
+# 驗證腳本產生的預期答案 JSON（可由 expected_*.js 重跑產生，不入庫）
+expected_*.json
