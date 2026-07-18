@@ -1,0 +1,1264 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="UTF-8">
+<title>國軍軍購案分析系統 v1150717</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: "Microsoft JhengHei", "PMingLiU", sans-serif;
+    background: #eef2f7; color: #1f2d3d; padding: 24px;
+  }
+  .container { max-width: 1500px; margin: 0 auto; }
+  h1 {
+    font-size: 26px; color: #1f4e79; text-align: center; margin-bottom: 4px;
+  }
+  .subtitle { text-align: center; color: #6b7a90; font-size: 13px; margin-bottom: 22px; }
+  .section {
+    background: #fff; border-radius: 10px; padding: 20px 24px; margin-bottom: 18px;
+    box-shadow: 0 1px 4px rgba(31,78,121,.12);
+  }
+  .section-title {
+    font-size: 17px; font-weight: bold; color: #1f4e79; margin-bottom: 14px;
+    display: flex; align-items: center; gap: 10px;
+  }
+  .step-badge {
+    display: inline-flex; align-items: center; justify-content: center;
+    width: 26px; height: 26px; border-radius: 50%;
+    background: #1f4e79; color: #fff; font-size: 14px; flex: none;
+  }
+  .alert { padding: 10px 14px; border-radius: 6px; font-size: 14px; }
+  .alert-warning { background: #fff6e0; border: 1px solid #e8c766; color: #8a6100; }
+  .alert-info { background: #e8f1fb; border: 1px solid #9dc0e8; color: #1f4e79; }
+  .alert-danger { background: #fdecec; border: 1px solid #e59a9a; color: #a11c1c; }
+  .alert-ok { background: #e9f6ea; border: 1px solid #9ccb9f; color: #226b28; }
+  .alert + .alert { margin-top: 8px; }
+  .upload-area {
+    border: 2px dashed #9dc0e8; border-radius: 8px; padding: 34px; text-align: center;
+    cursor: pointer; color: #4a6076; transition: background .15s;
+  }
+  .upload-area:hover, .upload-area.drag { background: #f0f6fd; }
+  .upload-area .big { font-size: 16px; font-weight: bold; color: #1f4e79; }
+  #file-name { margin-top: 10px; font-size: 14px; color: #2e7d32; }
+  .table-wrap { overflow-x: auto; max-height: 420px; overflow-y: auto; border: 1px solid #d6dee8; border-radius: 6px; }
+  table { border-collapse: collapse; width: 100%; font-size: 13px; white-space: nowrap; }
+  th, td { border: 1px solid #d6dee8; padding: 6px 10px; }
+  thead th { background: #1f4e79; color: #fff; position: sticky; top: 0; font-weight: normal; }
+  tbody tr:nth-child(even) { background: #f5f8fc; }
+  td.num { text-align: right; font-variant-numeric: tabular-nums; }
+  td.ctr { text-align: center; }
+  .grp-row td { background: #dce6f1 !important; font-weight: bold; color: #1f4e79; }
+  /* 預覽區：欄位確認 */
+  th.col-letter { background: #163d5e; font-size: 12px; padding: 3px 10px; }
+  th.rowlab, td.rowlab {
+    background: #f0f4f9; color: #1f4e79; font-weight: bold; font-size: 12px;
+    text-align: center; position: sticky; left: 0; z-index: 2;
+  }
+  thead th.rowlab { background: #163d5e; color: #fff; z-index: 3; }
+  tr.file-header-row td {
+    background: #fff6e0 !important; font-weight: bold; color: #6b4e00;
+    white-space: normal; min-width: 90px;
+  }
+  tr.file-header-row td.rowlab { background: #ffe9b3 !important; color: #8a6100; }
+  tr.file-header-row td.mismatch { background: #fdd8d8 !important; color: #a11c1c; }
+  .legend { font-size: 12px; color: #6b7a90; margin: 8px 0 10px; }
+  .legend span { display: inline-block; margin-right: 16px; }
+  .swatch { display: inline-block; width: 12px; height: 12px; border: 1px solid #c8ceda; vertical-align: -2px; margin-right: 4px; }
+  .btn {
+    display: inline-block; border: none; border-radius: 6px; cursor: pointer;
+    padding: 10px 22px; font-size: 15px; font-family: inherit;
+    background: #1f4e79; color: #fff;
+  }
+  .btn:hover:not(:disabled) { background: #2a63a0; }
+  .btn:disabled { background: #b8c4d2; cursor: not-allowed; }
+  .btn-sm { padding: 5px 14px; font-size: 13px; }
+  .btn-green { background: #2e7d32; }
+  .btn-green:hover:not(:disabled) { background: #3b9a41; }
+  .btn-gray { background: #5a6b7f; }
+  .btn-gray:hover:not(:disabled) { background: #6e8098; }
+  .btn-row { margin-top: 14px; display: flex; gap: 12px; flex-wrap: wrap; }
+  details.panel { border: 1px solid #d6dee8; border-radius: 8px; margin-bottom: 12px; overflow: hidden; }
+  details.panel summary {
+    cursor: pointer; padding: 10px 16px; background: #dce6f1; color: #1f4e79;
+    font-weight: bold; font-size: 15px; user-select: none;
+  }
+  details.panel[open] summary { border-bottom: 1px solid #d6dee8; }
+  .panel-body { padding: 6px 0; }
+  table.param-table { font-size: 13px; white-space: normal; }
+  table.param-table th { background: #f0f4f9; color: #1f4e79; border: 1px solid #e0e7ef; }
+  table.param-table td { border: 1px solid #e0e7ef; vertical-align: middle; }
+  .param-cell { display: flex; flex-wrap: wrap; gap: 6px 14px; align-items: center; }
+  .param-item { display: flex; align-items: center; gap: 5px; font-size: 13px; }
+  .param-item input {
+    width: 110px; padding: 4px 6px; border: 1px solid #b8c4d2; border-radius: 4px;
+    font-size: 13px; text-align: right; font-family: inherit;
+  }
+  .param-note { color: #8a94a3; font-size: 12px; }
+  .count-line { margin: 10px 0; font-size: 14px; color: #1f4e79; }
+  .detail-title { font-size: 20px; color: #1f4e79; font-weight: bold; }
+  /* 第二階段：會議資料檔案清單 */
+  .file-list { margin: 12px 0; }
+  .file-item {
+    display: flex; align-items: center; gap: 12px; flex-wrap: wrap;
+    padding: 8px 12px; border: 1px solid #d6dee8; border-radius: 6px;
+    margin-bottom: 6px; font-size: 14px; background: #f8fafc;
+  }
+  .file-item .fname { font-weight: bold; color: #1f4e79; }
+  .file-item .fmeta { color: #6b7a90; font-size: 13px; }
+  .file-item .fbad { color: #a11c1c; font-size: 13px; }
+  .btn-remove {
+    margin-left: auto; border: 1px solid #d9a0a0; background: #fff; color: #a11c1c;
+    border-radius: 5px; padding: 3px 12px; font-size: 13px; cursor: pointer; font-family: inherit;
+  }
+  .btn-remove:hover { background: #fdecec; }
+  td.wrapcell { white-space: normal; min-width: 260px; max-width: 560px; }
+  .hidden { display: none !important; }
+  .footer { text-align: center; color: #9aa7b6; font-size: 12px; margin-top: 8px; }
+</style>
+</head>
+<body>
+<div class="container">
+
+  <h1>國軍軍購案分析系統</h1>
+  <div class="subtitle">版本 v1150717｜20 項控制點（軍投 10 項＋作維 10 項）＋第二階段會議紀錄核對＋風險評分｜離線單機執行</div>
+
+  <!-- ===================== 主頁面 ===================== -->
+  <div id="main-view">
+
+    <div class="section">
+      <div class="section-title"><span class="step-badge">1</span>上傳執行中管制表</div>
+      <div class="alert alert-warning" style="margin-bottom:14px;">
+        ⚠️請先手動刪除文件標題，讓檔案第一列即為欄位名稱（欄位 A~P 共 16 欄）<br>
+        ⚠️請注意文件最末筆資料是否為「合計」，若是請先手動刪除，避免將該筆資料納入分析
+      </div>
+      <div class="upload-area" id="upload-area">
+        <div class="big">點擊或拖曳上傳 .xlsx 檔案</div>
+        <div style="margin-top:6px;font-size:13px;">執行中軍購案個案管制表</div>
+        <div id="file-name"></div>
+      </div>
+      <input type="file" id="file-input" accept=".xlsx,.xls" style="display:none">
+    </div>
+
+    <div class="section hidden" id="sec-preview">
+      <div class="section-title"><span class="step-badge">2</span>預覽完整資料｜確認欄位</div>
+      <div class="alert alert-warning">
+        ⚠️ <b>請先確認欄位是否正確再接續分析。</b>
+        下表第一列（黃底）為<b>上傳檔案的原始表頭</b>，請與表頭區的「系統預設欄位」逐欄核對。
+        若國防部來函資料調換過欄位順序，分析結果將完全錯誤。
+      </div>
+      <div id="preview-check"></div>
+      <div class="legend">
+        <span><i class="swatch" style="background:#1f4e79;"></i>系統預設欄位（分析所依據）</span>
+        <span><i class="swatch" style="background:#fff6e0;"></i>上傳檔案表頭</span>
+        <span><i class="swatch" style="background:#fdd8d8;"></i>與預設不符</span>
+      </div>
+      <div class="count-line" id="preview-count"></div>
+      <div class="table-wrap" id="preview-wrap"></div>
+    </div>
+
+    <div class="section hidden" id="sec-threshold">
+      <div class="section-title"><span class="step-badge">3</span>分析條件設定（金額單位：美元）</div>
+      <div class="alert alert-info" style="margin-bottom:12px;">
+        各控制點門檻皆可調整；「特別預算」類案件併入軍投類分析。成對控制點（如 1-3／1-4）共用同一差異門檻，維持互斥分割。
+      </div>
+      <div id="threshold-panels"></div>
+      <div class="btn-row">
+        <button class="btn" id="btn-run">執行分析</button>
+        <button class="btn btn-gray" id="btn-reset">還原預設值</button>
+      </div>
+    </div>
+
+    <div class="section hidden" id="sec-summary">
+      <div class="section-title"><span class="step-badge">4</span>分析總表</div>
+      <div class="count-line" id="summary-count"></div>
+      <div class="table-wrap" style="max-height:none;" id="summary-wrap"></div>
+      <div class="btn-row">
+        <button class="btn btn-green" id="btn-dl-summary">下載分析總表 (.xlsx)</button>
+        <button class="btn btn-green" id="btn-dl-all">下載全部分析結果明細表 (.xlsx)</button>
+      </div>
+    </div>
+
+    <div class="section hidden" id="sec-stage2">
+      <div class="section-title"><span class="step-badge">5</span>第二階段：上傳會議資料，核對會議紀錄（選用）</div>
+      <div class="alert alert-info" style="margin-bottom:14px;">
+        將各單位軍購管制會議整理檔上傳後執行核對，比對第一階段篩出案件之「案號」是否出現於會議資料。
+        可上傳一個或多個檔案；<b>若不進行第二階段，第一階段結果不受影響。</b><br>
+        檔案格式：第一列為欄位名稱，A~D 欄依序為「檢討態樣、案號、案名、說明或辦理情形」，僅讀取第一個工作表。
+      </div>
+      <div class="upload-area" id="mtg-upload-area">
+        <div class="big">點擊或拖曳上傳會議資料 .xlsx 檔案（可多選）</div>
+        <div style="margin-top:6px;font-size:13px;">會議資料整理檔</div>
+      </div>
+      <input type="file" id="mtg-file-input" accept=".xlsx,.xls" multiple style="display:none">
+      <div class="file-list" id="mtg-file-list"></div>
+      <div id="mtg-preview-block" class="hidden">
+        <div class="alert alert-warning" style="margin-bottom:10px;">
+          ⚠️ 請先確認以下會議資料內容正確，再執行核對。
+        </div>
+        <div class="count-line" id="mtg-preview-count"></div>
+        <div class="table-wrap" id="mtg-preview-wrap"></div>
+        <div class="btn-row">
+          <button class="btn" id="btn-run-stage2">執行核對</button>
+        </div>
+        <div id="stage2-result-msg" style="margin-top:10px;"></div>
+      </div>
+    </div>
+
+    <div class="section hidden" id="sec-score">
+      <div class="section-title"><span class="step-badge">6</span>風險評分（選用）</div>
+      <div class="alert alert-info" style="margin-bottom:14px;">
+        依「控制點篩選結果為所有軍購案評分的標準」為<b>每一案</b>評分：命中控制點者依對應維度計 1.00~10.00 分，
+        未命中該項者計 0 分。各案「執行風險分數」「財務風險分數」為所屬類別各維度得分加總，風險總分為兩者之和。
+        <b>本區與第二階段各自獨立</b>，可只執行其一、兩者皆執行或皆不執行，先後不拘。
+      </div>
+      <details class="panel">
+        <summary>評分標準上下限（唯讀）</summary>
+        <div class="panel-body" style="padding:12px 16px;">
+          <div class="alert alert-warning" style="margin-bottom:10px;">
+            以下六個參數已於機密區以真實資料校準定案並寫死，畫面僅供查閱。<b>不建議更動</b>；
+            若確有必要更動，須以「錨點校準工具」重新校正後，回到公開區改版，不可於此處臨時調整。
+          </div>
+          <table class="param-table" style="width:auto;"><tbody>
+            <tr><td>金額評分上限</td><td class="num">100 億美元</td><td class="param-note">10,000,000,000</td></tr>
+            <tr><td>金額評分下限</td><td class="num">1 萬美元</td><td class="param-note">10,000</td></tr>
+            <tr><td>待平衡支付值評分上限</td><td class="num">2 億美元</td><td class="param-note">200,000,000</td></tr>
+            <tr><td>待平衡支付值評分下限</td><td class="num">1 萬美元</td><td class="param-note">10,000</td></tr>
+            <tr><td>結匯率評分上限</td><td class="num">300％</td><td class="param-note">結匯率 3.0</td></tr>
+            <tr><td>雙軸權重 w</td><td class="num">0.50</td><td class="param-note">比率軸 50％／金額軸 50％</td></tr>
+          </tbody></table>
+        </div>
+      </details>
+      <div class="btn-row">
+        <button class="btn" id="btn-run-score">執行評分</button>
+      </div>
+      <div id="score-result" class="hidden">
+        <div class="count-line" id="score-count"></div>
+        <div class="btn-row">
+          <button class="btn btn-gray btn-sm" id="btn-rank-toggle">顯示全部案件（含 0 分）</button>
+        </div>
+        <div id="rank-juntou"></div>
+        <div id="rank-zuowei"></div>
+        <div class="btn-row">
+          <button class="btn btn-green" id="btn-dl-score">下載案件評分明細 (.xlsx)</button>
+          <button class="btn btn-green" id="btn-dl-rank-jt">下載軍投風險排名 (.xlsx)</button>
+          <button class="btn btn-green" id="btn-dl-rank-zw">下載作維風險排名 (.xlsx)</button>
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- ===================== 詳細頁面 ===================== -->
+  <div id="detail-view" class="hidden">
+    <div class="section">
+      <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:10px;margin-bottom:14px;">
+        <div class="detail-title" id="detail-title"></div>
+        <div style="display:flex;gap:10px;">
+          <button class="btn btn-gray" id="btn-back">← 上一頁</button>
+          <button class="btn btn-green" id="btn-dl-detail">下載明細表 (.xlsx)</button>
+        </div>
+      </div>
+      <div class="count-line" id="detail-count"></div>
+      <div class="table-wrap" id="detail-wrap"></div>
+    </div>
+  </div>
+
+  <div class="footer">本工具為離線單一檔案，資料僅於本機瀏覽器內處理，不會上傳任何伺服器。</div>
+</div>
+
+<script><!--SHEETJS_PLACEHOLDER--></script>
+
+<script>
+'use strict';
+
+/* ========== 欄位定義 ========== */
+// 輸入欄 0-based：A0項次 B1案號 C2軍種 D3單位 E4案名 F5類別 G6預算科目
+// H7發價值 I8結匯值 J9結匯率 K10交運值 L11交運率 M12備查帳USD N13備查帳TWD O14FRB P15待平衡支付值
+var IN_COLS = 16;
+var IN_HEADERS = ['項次','案號','軍種','單位','案名','類別','預算科目',
+  '發價值(A)\n美元','累積結匯值(B)\n美元','累計結匯率\n(C)=(B)/(A)','累積交運值(D)\n美元',
+  '累計交運率\n(E)=(D)/(B)','軍購備查帳\n(F)=(B)-(D)\n美元','軍購備查帳\n(F)=(B)-(D)\n新臺幣元','FRB餘額','待平衡支付值\n美元'];
+// 輸出 18 欄（原始 16 欄 + 分析項目名稱 + D/A 計算欄插於交運值後）
+var OUT_HEADERS = ['分析項目名稱','項次','案號','軍種','單位','案名','類別','預算科目',
+  '發價值(A) 美元','累積結匯值(B) 美元','累計結匯率(C)=(B)/(A)','累積交運值(D) 美元',
+  '累計交運值/發價值(D/A)','累計交運率(E)=(D)/(B)','軍購備查帳(F)=(B)-(D) 美元',
+  '軍購備查帳(F)=(B)-(D) 新臺幣元','FRB餘額','待平衡支付值 美元'];
+var OUT_MONEY = [8,9,11,14,15,16,17];   // 輸出列中的金額欄索引
+var OUT_RATIO = [10,12,13];              // 輸出列中的比率欄索引
+// 第二階段：會議資料
+var MTG_HEADERS = ['檢討態樣','案號','案名','說明或辦理情形'];
+var STAGE2_COLS = ['檢討態樣','說明或辦理情形'];   // 第二階段：存於 result row 索引 18、19
+var SCORE_COLS = ['本控制點分','風險總分'];        // 評分：不存 row，渲染／匯出時即算，永遠排在第二階段之後
+// 輸出表頭＝base 18 ＋（第二階段完成 ? 2 欄 ＠18,19 : []）＋（評分完成 ? 2 欄 : []）
+function outHeaders() {
+  var h = OUT_HEADERS.slice();
+  if (stage2Done) h = h.concat(STAGE2_COLS);
+  if (scoreDone) h = h.concat(SCORE_COLS);
+  return h;
+}
+
+/* ========== 可調參數（預設值） ========== */
+var PARAM_DEFS = {
+  p_jt2_r:  { def: 0.5,       kind: 'ratio' },
+  p_jt34_d: { def: 0.4,       kind: 'ratio' },
+  p_jt4_a:  { def: 30000000,  kind: 'money' },
+  p_jt5_r:  { def: 0.1,       kind: 'ratio' },
+  p_jt5_a:  { def: 100000000, kind: 'money' },
+  p_jt6_r:  { def: 1.0,       kind: 'ratio' },   // 1-6 結匯率超過100％（新增）
+  p_jt78_f: { def: 0.4,       kind: 'ratio' },   // 1-7/1-8 占比門檻（原 p_jt67_f）
+  p_jt8_a:  { def: 30000000,  kind: 'money' },   // 1-8 FRB餘額門檻（原 p_jt7_a）
+  p_jt10_j: { def: 0.9,       kind: 'ratio' },   // 1-10 結匯率門檻（新增）
+  p_jt10_l: { def: 0.5,       kind: 'ratio' },   // 1-10 交運率門檻（新增）
+  p_zw1_a:  { def: 3000000,   kind: 'money' },
+  p_zw2_r:  { def: 0.5,       kind: 'ratio' },
+  p_zw2_a:  { def: 30000000,  kind: 'money' },
+  p_zw34_d: { def: 0.5,       kind: 'ratio' },
+  p_zw3_a:  { def: 3000000,   kind: 'money' },
+  p_zw4_a:  { def: 30000000,  kind: 'money' },
+  p_zw5_r:  { def: 0.1,       kind: 'ratio' },
+  p_zw5_a:  { def: 10000000,  kind: 'money' },
+  p_zw6_r:  { def: 1.0,       kind: 'ratio' },
+  p_zw78_f: { def: 0.5,       kind: 'ratio' },
+  p_zw7_a:  { def: 3000000,   kind: 'money' },
+  p_zw8_a:  { def: 10000000,  kind: 'money' },
+  p_zw10_j: { def: 0.9,       kind: 'ratio' },   // 2-10 結匯率門檻（新增）
+  p_zw10_l: { def: 0.5,       kind: 'ratio' }    // 2-10 交運率門檻（新增）
+};
+
+/* ========== 20 項控制點定義 ==========
+   inputs: 該列閾值面板顯示的輸入框；note: 共用門檻的說明文字 */
+var CONTROL_POINTS = [
+  { id:'1-1', cat:'軍投', name:'交運值為0',
+    inputs:[], note:'',
+    test:function(v,p){ return v.K!==null && v.K===0; } },
+  { id:'1-2', cat:'軍投', name:'累計交運率未達50％（不含0）',
+    inputs:[{key:'p_jt2_r',label:'交運率門檻'}], note:'',
+    test:function(v,p){ return v.L!==null && v.L>0 && v.L<p.p_jt2_r; } },
+  { id:'1-3', cat:'軍投', name:'「累計交運值/發價值」與「累計結匯率」差異達40％以上',
+    inputs:[{key:'p_jt34_d',label:'差異門檻'}], note:'門檻與 1-4 共用',
+    test:function(v,p){ return v.diff!==null && v.diff>=p.p_jt34_d; } },
+  { id:'1-4', cat:'軍投', name:'「累計交運值/發價值」與「累計結匯率」差異未達40％，且軍購備查帳餘額達3000萬美元以上',
+    inputs:[{key:'p_jt4_a',label:'備查帳門檻'}], note:'差異門檻與 1-3 共用',
+    test:function(v,p){ return v.diff!==null && v.diff<p.p_jt34_d && v.M!==null && v.M>=p.p_jt4_a; } },
+  { id:'1-5', cat:'軍投', name:'「累計交運值」與「累計結匯值減去FRB餘額」之比率低於10％，且「累計交運值」與「累計結匯值減去FRB餘額」之差異金額大於1億美元',
+    inputs:[{key:'p_jt5_r',label:'比率門檻'},{key:'p_jt5_a',label:'差異金額門檻'}], note:'',
+    test:function(v,p){ return v.drawn!==null && v.drawn>0 && v.K!==null && (v.K/v.drawn)<p.p_jt5_r && Math.abs(v.K-v.drawn)>p.p_jt5_a; } },
+  { id:'1-6', cat:'軍投', name:'結匯率超過100％',
+    inputs:[{key:'p_jt6_r',label:'結匯率門檻'}], note:'',
+    test:function(v,p){ return v.J!==null && v.J>p.p_jt6_r; } },
+  { id:'1-7', cat:'軍投', name:'FRB餘額占累計結匯值比率達40％以上',
+    inputs:[{key:'p_jt78_f',label:'占比門檻'}], note:'門檻與 1-8 共用',
+    test:function(v,p){ return v.OI!==null && v.OI>=p.p_jt78_f; } },
+  { id:'1-8', cat:'軍投', name:'FRB餘額占累計結匯值比率未達40％，且FRB餘額達3000萬美元以上',
+    inputs:[{key:'p_jt8_a',label:'FRB餘額門檻'}], note:'占比門檻與 1-7 共用',
+    test:function(v,p){ return v.OI!==null && v.OI<p.p_jt78_f && v.O!==null && v.O>=p.p_jt8_a; } },
+  { id:'1-9', cat:'軍投', name:'待平衡支付值大於0（欠款案件）',
+    inputs:[], note:'',
+    test:function(v,p){ return v.P!==null && v.P>0; } },
+  { id:'1-10', cat:'軍投', name:'累計結匯率達90％，且累計交運率未達50％',
+    inputs:[{key:'p_jt10_j',label:'結匯率門檻'},{key:'p_jt10_l',label:'交運率門檻'}], note:'',
+    test:function(v,p){ return v.J!==null && v.J>=p.p_jt10_j && v.L!==null && v.L<p.p_jt10_l; } },
+
+  { id:'2-1', cat:'作維', name:'交運值為0，結匯值300萬美元以上',
+    inputs:[{key:'p_zw1_a',label:'結匯值門檻'}], note:'',
+    test:function(v,p){ return v.K!==null && v.K===0 && v.I!==null && v.I>=p.p_zw1_a; } },
+  { id:'2-2', cat:'作維', name:'累計交運率未達50％（不含0），且軍購備查帳餘額達3000萬美元以上',
+    inputs:[{key:'p_zw2_r',label:'交運率門檻'},{key:'p_zw2_a',label:'備查帳門檻'}], note:'',
+    test:function(v,p){ return v.L!==null && v.L>0 && v.L<p.p_zw2_r && v.M!==null && v.M>=p.p_zw2_a; } },
+  { id:'2-3', cat:'作維', name:'「累計交運值/發價值」與「累計結匯率」差異達50％以上，且軍購備查帳餘額300萬美元以上',
+    inputs:[{key:'p_zw34_d',label:'差異門檻'},{key:'p_zw3_a',label:'備查帳門檻'}], note:'差異門檻與 2-4 共用',
+    test:function(v,p){ return v.diff!==null && v.diff>=p.p_zw34_d && v.M!==null && v.M>=p.p_zw3_a; } },
+  { id:'2-4', cat:'作維', name:'「累計交運值/發價值」與「累計結匯率」差異未達50％，且軍購備查帳餘額達3000萬美元以上',
+    inputs:[{key:'p_zw4_a',label:'備查帳門檻'}], note:'差異門檻與 2-3 共用',
+    test:function(v,p){ return v.diff!==null && v.diff<p.p_zw34_d && v.M!==null && v.M>=p.p_zw4_a; } },
+  { id:'2-5', cat:'作維', name:'「累計交運值」與「累計結匯值減去FRB餘額」之比率低於10％，且「累計交運值」與「累計結匯值減去FRB餘額」之差異金額大於1000萬美元',
+    inputs:[{key:'p_zw5_r',label:'比率門檻'},{key:'p_zw5_a',label:'差異金額門檻'}], note:'',
+    test:function(v,p){ return v.drawn!==null && v.drawn>0 && v.K!==null && (v.K/v.drawn)<p.p_zw5_r && Math.abs(v.K-v.drawn)>p.p_zw5_a; } },
+  { id:'2-6', cat:'作維', name:'結匯率超過100％',
+    inputs:[{key:'p_zw6_r',label:'結匯率門檻'}], note:'',
+    test:function(v,p){ return v.J!==null && v.J>p.p_zw6_r; } },
+  { id:'2-7', cat:'作維', name:'FRB餘額占累計結匯值比率達50％以上，且FRB餘額達300萬美元以上',
+    inputs:[{key:'p_zw78_f',label:'占比門檻'},{key:'p_zw7_a',label:'FRB餘額門檻'}], note:'占比門檻與 2-8 共用',
+    test:function(v,p){ return v.OI!==null && v.OI>=p.p_zw78_f && v.O!==null && v.O>=p.p_zw7_a; } },
+  { id:'2-8', cat:'作維', name:'FRB餘額占累計結匯值比率未達50％，且FRB餘額達1000萬美元以上',
+    inputs:[{key:'p_zw8_a',label:'FRB餘額門檻'}], note:'占比門檻與 2-7 共用',
+    test:function(v,p){ return v.OI!==null && v.OI<p.p_zw78_f && v.O!==null && v.O>=p.p_zw8_a; } },
+  { id:'2-9', cat:'作維', name:'待平衡支付值大於0（欠款案件）',
+    inputs:[], note:'',
+    test:function(v,p){ return v.P!==null && v.P>0; } },
+  { id:'2-10', cat:'作維', name:'累計結匯率達90％，且累計交運率未達50％',
+    inputs:[{key:'p_zw10_j',label:'結匯率門檻'},{key:'p_zw10_l',label:'交運率門檻'}], note:'',
+    test:function(v,p){ return v.J!==null && v.J>=p.p_zw10_j && v.L!==null && v.L<p.p_zw10_l; } }
+];
+
+/* ========== 風險評分引擎（移植自 錨點校準工具 v1150717，錨點已定案寫死） ==========
+   規則見「控制點篩選結果為所有軍購案評分的標準.docx」。
+   與校準工具的差異：軍投 1-10 併入 1-3/1-4、不獨立計分（故此處 SCORE_DIMS 無 1-10）；
+   每個維度加 risk（執行/財務）欄，供加總出「執行風險分數」「財務風險分數」。 */
+function Rax(label, get, lo, hi) { return { kind:'ratio', label:label, get:get, lo:lo, hi:hi }; }
+function Max(label, get, thr) { return { kind:'money', label:label, get:get, thr:thr }; }
+// 六個定案錨點（寫死；唯讀。若要更動須用校準工具重新校正後回公開區改版）
+var A = { moneyHi:1e10, moneyLoMode:'custom', moneyLo:1e4, pLo:1e4, pHi:2e8, jHi:300, w:0.5 };
+function effMoneyLo() { return A.moneyLoMode === 'custom' ? A.moneyLo : null; }
+function effJHi() { return A.jHi / 100; }
+function clip(x) { return Math.max(0, Math.min(1, x)); }
+function axLo(ax) {
+  if (ax.kind === 'ratio') return ax.lo;
+  if (ax.thr === null) return A.pLo;
+  var m = effMoneyLo();
+  return m === null ? ax.thr : m;
+}
+function axHi(ax) {
+  if (ax.kind === 'ratio') return ax.hi === null ? effJHi() : ax.hi;
+  if (ax.thr === null) return A.pHi;
+  return A.moneyHi;
+}
+function sev(ax, v) {
+  var x = ax.get(v);
+  if (x === null || x === undefined) return 0;
+  var lo = axLo(ax), hi = axHi(ax);
+  if (ax.kind === 'ratio') return clip((x - lo) / (hi - lo));
+  return clip(Math.log(Math.max(x, lo) / lo) / Math.log(hi / lo));
+}
+function scoreOf(dim, v) {
+  if (dim.fixed !== undefined) return dim.fixed;
+  var ss = dim.axes.map(function (ax) { return sev(ax, v); });
+  var s;
+  if (dim.axes.length === 1) s = ss[0];
+  else {
+    var ri = 0, mi = 1;
+    for (var i = 0; i < dim.axes.length; i++) { if (dim.axes[i].kind === 'ratio') ri = i; else mi = i; }
+    s = A.w * ss[ri] + (1 - A.w) * ss[mi];
+  }
+  return 1 + 9 * s;
+}
+// 16 個評分維度中，軍投 1-10 併入不計分 → 實際 15 個
+var SCORE_DIMS = [
+  { id:'1-1', cat:'軍投', risk:'執行', fixed:10 },
+  { id:'1-2', cat:'軍投', risk:'執行', axes:[Rax('累計交運率', function(v){return v.L;}, 0.5, 0)] },
+  { id:'1-3/1-4', cat:'軍投', risk:'執行', axes:[Rax('差異', function(v){return v.diff;}, 0, 1), Max('軍購備查帳餘額', function(v){return v.M;}, 30000000)] },
+  { id:'1-5', cat:'軍投', risk:'執行', axes:[Rax('交運/已提領', function(v){return v.kr;}, 0.1, 0), Max('二者差異金額', function(v){return v.gap;}, 100000000)] },
+  { id:'1-6', cat:'軍投', risk:'財務', axes:[Rax('累計結匯率', function(v){return v.J;}, 1.0, null)] },
+  { id:'1-7/1-8', cat:'軍投', risk:'財務', axes:[Rax('FRB占結匯值比率', function(v){return v.OI;}, 0, 1), Max('FRB餘額', function(v){return v.O;}, 30000000)] },
+  { id:'1-9', cat:'軍投', risk:'財務', axes:[Max('待平衡支付值', function(v){return v.Pv;}, null)] },
+  { id:'2-1', cat:'作維', risk:'執行', fixed:10 },
+  { id:'2-2', cat:'作維', risk:'執行', axes:[Rax('累計交運率', function(v){return v.L;}, 0.5, 0), Max('軍購備查帳餘額', function(v){return v.M;}, 30000000)] },
+  { id:'2-3/2-4', cat:'作維', risk:'執行', axes:[Rax('差異', function(v){return v.diff;}, 0, 1), Max('軍購備查帳餘額', function(v){return v.M;}, 3000000)] },
+  { id:'2-5', cat:'作維', risk:'執行', axes:[Rax('交運/已提領', function(v){return v.kr;}, 0.1, 0), Max('二者差異金額', function(v){return v.gap;}, 10000000)] },
+  { id:'2-6', cat:'作維', risk:'財務', axes:[Rax('累計結匯率', function(v){return v.J;}, 1.0, null)] },
+  { id:'2-7/2-8', cat:'作維', risk:'財務', axes:[Rax('FRB占結匯值比率', function(v){return v.OI;}, 0, 1), Max('FRB餘額', function(v){return v.O;}, 3000000)] },
+  { id:'2-9', cat:'作維', risk:'財務', axes:[Max('待平衡支付值', function(v){return v.Pv;}, null)] },
+  { id:'2-10', cat:'作維', risk:'執行', axes:[Rax('結匯率與交運率差距', function(v){return v.jl;}, 0.4, 1.0)] }
+];
+var SCORE_DIM_BY_ID = {};
+for (var _si = 0; _si < SCORE_DIMS.length; _si++) SCORE_DIM_BY_ID[SCORE_DIMS[_si].id] = SCORE_DIMS[_si];
+// 控制點 id → 評分維度 id；成對控制點共用一維度；1-10 併入 1-3/1-4 → null（不計分）
+function dimIdForCP(cpId) {
+  if (cpId === '1-3' || cpId === '1-4') return '1-3/1-4';
+  if (cpId === '1-7' || cpId === '1-8') return '1-7/1-8';
+  if (cpId === '2-3' || cpId === '2-4') return '2-3/2-4';
+  if (cpId === '2-7' || cpId === '2-8') return '2-7/2-8';
+  if (cpId === '1-10') return null;
+  return cpId;
+}
+function fmt2(x) {
+  return (typeof x === 'number' && isFinite(x)) ? x.toFixed(2) : (x === null || x === undefined ? '' : String(x));
+}
+
+/* ========== 全域狀態 ========== */
+var dataRows = null;          // 上傳的資料列（不含標題）
+var rawHeader = null;         // 上傳檔案的原始第一列（表頭），供欄位核對用
+var results = null;           // { '1-1': [outRow, ...], ... }
+var counts = null;            // { '1-1': {陸軍,海軍,空軍,其他}, ... }
+var meetingFiles = [];        // 第二階段：[{name, rows:[[態樣,案號,案名,說明],...], badCols:[...]}]
+var stage2Done = false;       // 是否已執行第二階段核對
+var stage2Counts = null;      // { '1-1': 出現件數, ... }
+var resultsMeta = null;       // { '1-1': [rowIndex,...], ... } 與 results 各列平行，供評分查來源列
+var scoreDone = false;        // 是否已執行評分
+var caseScores = null;        // 與 dataRows 平行：[{exec,fin,total,perDim:{dimId:score}}, ...]
+var rankShowAll = false;      // 排名表是否顯示全部（含 0 分）案件
+
+/* ========== 工具函式 ========== */
+function num(v) {
+  if (v === null || v === undefined || v === '') return null;
+  var n = (typeof v === 'number') ? v : parseFloat(String(v).replace(/,/g, ''));
+  return isNaN(n) ? null : n;
+}
+function calcVals(row) {
+  var H = num(row[7]), I = num(row[8]), J = num(row[9]), K = num(row[10]),
+      L = num(row[11]), M = num(row[12]), O = num(row[14]), P = num(row[15]);
+  return {
+    H:H, I:I, J:J, K:K, L:L, M:M, O:O, P:P,
+    Pv:P,   // 評分引擎沿用 template_v1150717 的欄名 Pv（＝待平衡支付值，同 P）
+    DA:   (H !== null && H > 0 && K !== null) ? K / H : null,
+    diff: (H !== null && H > 0 && K !== null && J !== null) ? Math.abs(K / H - J) : null,
+    drawn:(I !== null && O !== null) ? I - O : null,
+    OI:   (I !== null && I > 0 && O !== null) ? O / I : null,
+    kr:   (I !== null && O !== null && (I - O) > 0 && K !== null) ? K / (I - O) : null,
+    gap:  (I !== null && O !== null && K !== null) ? Math.abs(K - (I - O)) : null,
+    jl:   (J !== null && L !== null) ? J - L : null
+  };
+}
+function svcBucket(row) {
+  var s = String(row[2] === undefined ? '' : row[2]).trim();
+  return (s === '陸軍' || s === '海軍' || s === '空軍') ? s : '其他';
+}
+function isZuoWei(row) { return String(row[5] === undefined ? '' : row[5]).trim() === '作維'; }
+function fmtMoney(v) {
+  var n = num(v);
+  return n === null ? String(v === undefined ? '' : v)
+                    : n.toLocaleString('en-US', { maximumFractionDigits: 2 });
+}
+function fmtRatio(v) {
+  var n = num(v);
+  return n === null ? String(v === undefined ? '' : v) : (n * 100).toFixed(2) + '%';
+}
+function todayStr() {
+  var d = new Date();
+  return d.getFullYear().toString() +
+    String(d.getMonth() + 1).padStart(2, '0') +
+    String(d.getDate()).padStart(2, '0');
+}
+function sanitizeFilename(s) {
+  var map = { '\\':'＼', '/':'／', ':':'：', '*':'＊', '?':'？', '"':'＂', '<':'＜', '>':'＞', '|':'｜' };
+  return s.replace(/[\\/:*?"<>|]/g, function (c) { return map[c] || '_'; });
+}
+function esc(s) {
+  return String(s === undefined || s === null ? '' : s)
+    .replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+}
+function getCP(id) {
+  for (var i = 0; i < CONTROL_POINTS.length; i++)
+    if (CONTROL_POINTS[i].id === id) return CONTROL_POINTS[i];
+  return null;
+}
+// 0→A, 25→Z, 26→AA
+function colLetter(n) {
+  var s = '', x = n + 1;
+  while (x > 0) { var m = (x - 1) % 26; s = String.fromCharCode(65 + m) + s; x = Math.floor((x - 1) / 26); }
+  return s;
+}
+// 比對欄位名稱時忽略所有空白與換行
+function normHeader(s) { return String(s === undefined || s === null ? '' : s).replace(/\s+/g, ''); }
+// 案號正規化：去除所有空白＋轉大寫
+function normCaseNo(s) { return String(s === undefined || s === null ? '' : s).replace(/\s+/g, '').toUpperCase(); }
+// 合計列偵測：最末筆資料的 A~G（索引0~6）任一儲存格文字含「合計」或「總計」→ 回傳描述，否則 null
+function detectTotalRow() {
+  if (!dataRows || !dataRows.length) return null;
+  var last = dataRows[dataRows.length - 1];
+  for (var c = 0; c <= 6; c++) {
+    var t = String(last[c] === undefined || last[c] === null ? '' : last[c]);
+    if (t.indexOf('合計') >= 0 || t.indexOf('總計') >= 0) {
+      return { rowNo: dataRows.length, col: colLetter(c), text: t.replace(/\s+/g, ' ').trim() };
+    }
+  }
+  return null;
+}
+// 回傳與系統預設不符的欄索引陣列
+function headerMismatches() {
+  var bad = [];
+  if (!rawHeader) return bad;
+  for (var i = 0; i < IN_COLS; i++)
+    if (normHeader(rawHeader[i]) !== normHeader(IN_HEADERS[i])) bad.push(i);
+  return bad;
+}
+
+/* ========== 檔案上傳與解析 ========== */
+var uploadArea = document.getElementById('upload-area');
+var fileInput = document.getElementById('file-input');
+uploadArea.addEventListener('click', function () { fileInput.click(); });
+uploadArea.addEventListener('dragover', function (e) { e.preventDefault(); uploadArea.classList.add('drag'); });
+uploadArea.addEventListener('dragleave', function () { uploadArea.classList.remove('drag'); });
+uploadArea.addEventListener('drop', function (e) {
+  e.preventDefault(); uploadArea.classList.remove('drag');
+  if (e.dataTransfer.files.length) readFile(e.dataTransfer.files[0]);
+});
+fileInput.addEventListener('change', function () {
+  if (fileInput.files.length) readFile(fileInput.files[0]);
+});
+
+function readFile(file) {
+  var reader = new FileReader();
+  reader.onload = function (e) {
+    try { parseWorkbook(e.target.result, file.name); }
+    catch (err) { alert('讀取失敗：' + err.message); }
+  };
+  reader.readAsArrayBuffer(file);
+}
+
+function parseWorkbook(arrayBuffer, fileName) {
+  var wb = XLSX.read(arrayBuffer, { type: 'array' });
+  var ws = wb.Sheets[wb.SheetNames[0]];
+  var rows = XLSX.utils.sheet_to_json(ws, { header: 1, defval: '' });
+  if (!rows.length) { alert('檔案內沒有資料'); return; }
+  var header = rows[0];
+  if (header.length < IN_COLS) {
+    alert('欄位不足 ' + IN_COLS + ' 欄（僅偵測到 ' + header.length + ' 欄）。\n請確認：\n1. 已刪除文件標題列，第一列即為欄位名稱\n2. 已包含「待平衡支付值」欄（P欄）');
+    return;
+  }
+  rawHeader = header;
+  dataRows = rows.slice(1).filter(function (r) {
+    return r.some(function (c) { return c !== '' && c !== null && c !== undefined; });
+  });
+  results = null; counts = null;
+  stage2Done = false; stage2Counts = null;   // 會議檔保留，重新分析後自動再核對
+  document.getElementById('file-name').textContent = '✓ 已載入：' + (fileName || '') + '（' + dataRows.length + ' 筆資料）';
+  renderPreview();
+  renderThresholdPanels();
+  document.getElementById('sec-preview').classList.remove('hidden');
+  document.getElementById('sec-threshold').classList.remove('hidden');
+  document.getElementById('sec-summary').classList.add('hidden');
+  document.getElementById('sec-stage2').classList.add('hidden');
+}
+
+/* ========== 預覽（含欄位核對） ========== */
+var RATIO_IN = [9, 11];                     // 輸入列中的比率欄
+var MONEY_IN = [7, 8, 10, 12, 13, 14, 15];  // 輸入列中的金額欄
+
+function renderPreview() {
+  var nCols = Math.max(IN_COLS, rawHeader.length);
+  var bad = headerMismatches();
+  var i, c, r;
+
+  // --- 核對結果訊息 ---
+  var msg = '';
+  if (bad.length) {
+    var names = [];
+    for (i = 0; i < bad.length; i++) {
+      names.push(colLetter(bad[i]) + ' 欄（預設「' +
+        esc(String(IN_HEADERS[bad[i]]).replace(/\s+/g, ' ')) + '」，實際「' +
+        esc(String(rawHeader[bad[i]] === undefined ? '(空白)' : rawHeader[bad[i]]).replace(/\s+/g, ' ')) + '」）');
+    }
+    msg += '<div class="alert alert-danger">🛑 <b>偵測到 ' + bad.length +
+      ' 個欄位與系統預設不符</b>，分析結果可能完全錯誤，請確認欄位順序是否遭調換：<br>' +
+      names.join('<br>') + '</div>';
+  } else {
+    msg += '<div class="alert alert-ok">✓ 上傳檔案的 ' + IN_COLS +
+      ' 個欄位名稱與系統預設完全相符（比對時忽略空白與換行）。</div>';
+  }
+  if (rawHeader.length > IN_COLS) {
+    msg += '<div class="alert alert-warning">ℹ️ 檔案另有 ' + (rawHeader.length - IN_COLS) +
+      ' 個多餘欄位（' + colLetter(IN_COLS) + ' 欄以後），分析時將予以忽略。</div>';
+  }
+  var tot = detectTotalRow();
+  if (tot) {
+    msg += '<div class="alert alert-danger">🛑 <b>最末筆資料（第 ' + tot.rowNo + ' 列）疑似「合計」列</b>' +
+      '（' + tot.col + ' 欄：「' + esc(tot.text) + '」）。此列並非真實案件，' +
+      '若納入分析將造成統計錯誤，<b>請先手動刪除該列後重新上傳</b>。</div>';
+  }
+  document.getElementById('preview-check').innerHTML = msg;
+
+  // --- 表格：thead = Excel 欄號 + 系統預設欄位；tbody 首列 = 上傳檔案表頭 ---
+  var html = '<table><thead>';
+  html += '<tr><th class="rowlab">Excel 欄</th>';
+  for (i = 0; i < nCols; i++) html += '<th class="col-letter">' + colLetter(i) + '</th>';
+  html += '</tr><tr><th class="rowlab">系統預設欄位</th>';
+  for (i = 0; i < nCols; i++) {
+    html += '<th>' + (i < IN_COLS ? esc(IN_HEADERS[i]).replace(/\n/g, '<br>') : '<i>（多餘欄位）</i>') + '</th>';
+  }
+  html += '</tr></thead><tbody>';
+
+  html += '<tr class="file-header-row"><td class="rowlab">上傳檔案表頭</td>';
+  for (i = 0; i < nCols; i++) {
+    var isBad = bad.indexOf(i) >= 0;
+    html += '<td' + (isBad ? ' class="mismatch"' : '') + '>' +
+      esc(rawHeader[i]).replace(/\n/g, '<br>') + '</td>';
+  }
+  html += '</tr>';
+
+  for (r = 0; r < dataRows.length; r++) {
+    var row = dataRows[r];
+    html += '<tr><td class="rowlab">' + (r + 1) + '</td>';
+    for (c = 0; c < nCols; c++) {
+      var v = row[c];
+      if (RATIO_IN.indexOf(c) >= 0) html += '<td class="num">' + esc(fmtRatio(v)) + '</td>';
+      else if (MONEY_IN.indexOf(c) >= 0) html += '<td class="num">' + esc(fmtMoney(v)) + '</td>';
+      else html += '<td>' + esc(v) + '</td>';
+    }
+    html += '</tr>';
+  }
+  html += '</tbody></table>';
+  document.getElementById('preview-wrap').innerHTML = html;
+  document.getElementById('preview-count').textContent =
+    '共 ' + dataRows.length + ' 筆資料、' + rawHeader.length + ' 個欄位（系統分析使用前 ' + IN_COLS + ' 欄）';
+}
+
+/* ========== 閾值面板 ========== */
+function renderThresholdPanels() {
+  var cats = [
+    { cat: '軍投', title: '軍事投資建案（軍投，含特別預算）— 10 項' },
+    { cat: '作維', title: '作業維持案（作維）— 10 項' }
+  ];
+  var html = '';
+  for (var g = 0; g < cats.length; g++) {
+    html += '<details class="panel" open><summary>' + cats[g].title + '</summary><div class="panel-body">';
+    html += '<div class="table-wrap" style="max-height:none;border:none;"><table class="param-table">';
+    html += '<thead><tr><th style="width:52px;">編號</th><th>控制點名稱</th><th style="width:420px;">門檻參數</th></tr></thead><tbody>';
+    for (var i = 0; i < CONTROL_POINTS.length; i++) {
+      var cp = CONTROL_POINTS[i];
+      if (cp.cat !== cats[g].cat) continue;
+      html += '<tr><td class="ctr">' + cp.id + '</td><td>' + esc(cp.name) + '</td><td><div class="param-cell">';
+      if (!cp.inputs.length && !cp.note) html += '<span class="param-note">（無參數）</span>';
+      for (var k = 0; k < cp.inputs.length; k++) {
+        var inp = cp.inputs[k], def = PARAM_DEFS[inp.key];
+        var step = def.kind === 'ratio' ? '0.05' : '1000000';
+        html += '<span class="param-item">' + esc(inp.label) + '：' +
+          '<input type="number" id="' + inp.key + '" value="' + def.def + '" step="' + step + '" min="0">' +
+          (def.kind === 'ratio' ? '<span class="param-note">(比率)</span>' : '<span class="param-note">(美元)</span>') +
+          '</span>';
+      }
+      if (cp.note) html += '<span class="param-note">※ ' + esc(cp.note) + '</span>';
+      html += '</div></td></tr>';
+    }
+    html += '</tbody></table></div></div></details>';
+  }
+  document.getElementById('threshold-panels').innerHTML = html;
+}
+
+function readParams() {
+  var p = {};
+  for (var key in PARAM_DEFS) {
+    var el = document.getElementById(key);
+    var v = el ? parseFloat(el.value) : NaN;
+    p[key] = isNaN(v) ? PARAM_DEFS[key].def : v;
+  }
+  return p;
+}
+
+document.getElementById('btn-reset').addEventListener('click', function () {
+  for (var key in PARAM_DEFS) {
+    var el = document.getElementById(key);
+    if (el) el.value = PARAM_DEFS[key].def;
+  }
+});
+
+/* ========== 分析 ========== */
+function buildOutRow(cp, row, v) {
+  return ['' + cp.cat + cp.id + ' ' + cp.name,
+    row[0], row[1], row[2], row[3], row[4], row[5], row[6],
+    num(row[7]), num(row[8]), num(row[9]), num(row[10]),
+    v.DA, num(row[11]), num(row[12]), num(row[13]), num(row[14]), num(row[15])];
+}
+
+function runAnalysis() {
+  if (!dataRows) { alert('請先上傳檔案'); return; }
+  var bad = headerMismatches();
+  if (bad.length) {
+    var lines = [];
+    for (var b = 0; b < bad.length; b++) {
+      lines.push('  ' + colLetter(bad[b]) + ' 欄：預設「' + String(IN_HEADERS[bad[b]]).replace(/\s+/g, ' ') +
+        '」，實際「' + String(rawHeader[bad[b]] === undefined ? '(空白)' : rawHeader[bad[b]]).replace(/\s+/g, ' ') + '」');
+    }
+    if (!confirm('偵測到 ' + bad.length + ' 個欄位與系統預設不符：\n\n' + lines.join('\n') +
+      '\n\n系統仍會依「欄位位置」進行分析，若欄位順序遭調換，結果將完全錯誤。\n確定要繼續分析嗎？')) return;
+  }
+  var tot = detectTotalRow();
+  if (tot) {
+    if (!confirm('最末筆資料（第 ' + tot.rowNo + ' 列）疑似「合計」列：\n\n  ' + tot.col + ' 欄：「' + tot.text + '」\n\n' +
+      '此列並非真實案件，納入分析將造成統計錯誤。\n建議取消後手動刪除該列再重新上傳。\n仍要繼續分析嗎？')) return;
+  }
+  var p = readParams();
+  results = {}; counts = {}; resultsMeta = {};
+  var i, cp;
+  for (i = 0; i < CONTROL_POINTS.length; i++) {
+    results[CONTROL_POINTS[i].id] = [];
+    resultsMeta[CONTROL_POINTS[i].id] = [];
+    counts[CONTROL_POINTS[i].id] = { '陸軍': 0, '海軍': 0, '空軍': 0, '其他': 0 };
+  }
+  for (var r = 0; r < dataRows.length; r++) {
+    var row = dataRows[r];
+    var zw = isZuoWei(row);
+    var v = calcVals(row);
+    var bucket = svcBucket(row);
+    for (i = 0; i < CONTROL_POINTS.length; i++) {
+      cp = CONTROL_POINTS[i];
+      if ((cp.cat === '作維') !== zw) continue;   // 作維項只套作維；軍投項套軍投＋特別預算
+      if (cp.test(v, p)) {
+        results[cp.id].push(buildOutRow(cp, row, v));
+        resultsMeta[cp.id].push(r);
+        counts[cp.id][bucket]++;
+      }
+    }
+  }
+  // 第二階段：若已上傳會議資料，重新分析後自動重新核對
+  stage2Done = false; stage2Counts = null;
+  if (meetingFiles.length) applyStage2();
+  // 評分：結果已變，重置；若先前已評分則自動重評
+  var wasScored = scoreDone;
+  scoreDone = false; caseScores = null;
+  document.getElementById('score-result').classList.add('hidden');
+  if (wasScored) runScoring();
+  renderSummary();
+  document.getElementById('sec-summary').classList.remove('hidden');
+  document.getElementById('sec-stage2').classList.remove('hidden');
+  document.getElementById('sec-score').classList.remove('hidden');
+  document.getElementById('sec-summary').scrollIntoView({ behavior: 'smooth' });
+}
+document.getElementById('btn-run').addEventListener('click', runAnalysis);
+
+/* ========== 分析總表 ========== */
+function renderSummary() {
+  var total = 0, id;
+  for (id in results) total += results[id].length;
+  document.getElementById('summary-count').textContent =
+    '分析完成：' + dataRows.length + ' 筆資料，符合控制點之結果共 ' + total + ' 筆（同一案件符合多項控制點者各計一筆）';
+
+  var html = '<table><thead><tr><th style="width:56px;">編號</th><th>控制點名稱</th>' +
+    '<th style="width:70px;">陸軍</th><th style="width:70px;">海軍</th><th style="width:70px;">空軍</th>' +
+    '<th style="width:190px;">其他（含中央或多軍種統建）</th><th style="width:70px;">合計</th>' +
+    '<th style="width:150px;">第二階段：核對會議紀錄</th><th style="width:110px;">詳細情形</th></tr></thead><tbody>';
+  var lastCat = '';
+  for (var i = 0; i < CONTROL_POINTS.length; i++) {
+    var cp = CONTROL_POINTS[i];
+    if (cp.cat !== lastCat) {
+      lastCat = cp.cat;
+      var catLabel = cp.cat === '軍投' ? '軍事投資建案（軍投，含特別預算）' : '作業維持案（作維）';
+      html += '<tr class="grp-row"><td colspan="9">' + catLabel + '</td></tr>';
+    }
+    var c = counts[cp.id];
+    var n = results[cp.id].length;
+    html += '<tr><td class="ctr">' + cp.id + '</td><td>' + esc(cp.name) + '</td>' +
+      '<td class="num">' + c['陸軍'] + '</td><td class="num">' + c['海軍'] + '</td>' +
+      '<td class="num">' + c['空軍'] + '</td><td class="num">' + c['其他'] + '</td>' +
+      '<td class="num"><b>' + n + '</b></td>' +
+      '<td class="ctr">' + esc(stage2Text(cp.id)) + '</td>' +
+      '<td class="ctr"><button class="btn btn-sm" data-cpid="' + cp.id + '"' + (n === 0 ? ' disabled' : '') + '>明細表</button></td></tr>';
+  }
+  html += '</tbody></table>';
+  var wrap = document.getElementById('summary-wrap');
+  wrap.innerHTML = html;
+  var btns = wrap.querySelectorAll('button[data-cpid]');
+  for (var b = 0; b < btns.length; b++) {
+    btns[b].addEventListener('click', function () { showDetail(this.getAttribute('data-cpid')); });
+  }
+}
+
+/* ========== 視圖切換 ========== */
+var currentDetailId = null;
+function showDetail(id) {
+  currentDetailId = id;
+  var cp = getCP(id);
+  var rows = results[id];
+  document.getElementById('detail-title').textContent = cp.cat + ' ' + cp.id + ' ' + cp.name;
+  document.getElementById('detail-count').textContent = '符合案件共 ' + rows.length + ' 筆';
+  var HD = outHeaders();
+  var html = '<table><thead><tr>';
+  for (var i = 0; i < HD.length; i++) html += '<th>' + esc(HD[i]) + '</th>';
+  html += '</tr></thead><tbody>';
+  for (var r = 0; r < rows.length; r++) {
+    html += '<tr>';
+    // base 段（0~17）
+    for (var c = 0; c < 18; c++) {
+      var v = rows[r][c];
+      if (OUT_RATIO.indexOf(c) >= 0) html += '<td class="num">' + esc(v === null ? '' : fmtRatio(v)) + '</td>';
+      else if (OUT_MONEY.indexOf(c) >= 0) html += '<td class="num">' + esc(v === null ? '' : fmtMoney(v)) + '</td>';
+      else html += '<td>' + esc(v) + '</td>';
+    }
+    // 第二階段段（換行文字，存於 18/19）
+    if (stage2Done) {
+      html += '<td class="wrapcell">' + esc(rows[r][18]).replace(/\n/g, '<br>') + '</td>';
+      html += '<td class="wrapcell">' + esc(rows[r][19]).replace(/\n/g, '<br>') + '</td>';
+    }
+    // 評分段（即算，不存 row）
+    if (scoreDone) {
+      var sc = scoreCellsFor(id, r);
+      html += '<td class="num">' + esc(fmt2(sc[0])) + '</td>';
+      html += '<td class="num">' + esc(fmt2(sc[1])) + '</td>';
+    }
+    html += '</tr>';
+  }
+  html += '</tbody></table>';
+  document.getElementById('detail-wrap').innerHTML = html;
+  document.getElementById('main-view').classList.add('hidden');
+  document.getElementById('detail-view').classList.remove('hidden');
+  window.scrollTo(0, 0);
+}
+function showMain() {
+  document.getElementById('detail-view').classList.add('hidden');
+  document.getElementById('main-view').classList.remove('hidden');
+}
+document.getElementById('btn-back').addEventListener('click', showMain);
+
+/* ========== 匯出（AOA 建構與下載分離，便於驗證） ========== */
+function stage2Text(id) {
+  if (!stage2Done || !stage2Counts) return '';
+  var n = stage2Counts[id] || 0;
+  return n > 0 ? '有出現（' + n + '件）' : '';
+}
+// 明細頁／匯出的評分 2 欄：[本控制點分, 風險總分]（本控制點分：1-10 無對應維度→文字）
+function scoreCellsFor(id, k) {
+  var ri = resultsMeta[id][k];
+  var dimId = dimIdForCP(id);
+  var cp = dimId ? caseScores[ri].perDim[dimId] : '併入1-3/1-4';
+  return [cp, caseScores[ri].total];
+}
+// 單一結果列的完整輸出值（base ＋ 選用第二階段 ＋ 選用評分），供匯出用
+function outRowValues(id, k) {
+  var row = results[id][k];
+  var out = row.slice(0, 18);
+  if (stage2Done) out.push(row[18] === undefined ? '' : row[18], row[19] === undefined ? '' : row[19]);
+  if (scoreDone) {
+    var sc = scoreCellsFor(id, k);
+    out.push(typeof sc[0] === 'number' ? +sc[0].toFixed(2) : sc[0], +sc[1].toFixed(2));
+  }
+  return out;
+}
+function buildSummaryAOA() {
+  var aoa = [['種類', '編號', '控制點名稱', '陸軍', '海軍', '空軍', '其他（含中央或多軍種統建）', '合計', '第二階段：核對會議紀錄']];
+  for (var i = 0; i < CONTROL_POINTS.length; i++) {
+    var cp = CONTROL_POINTS[i], c = counts[cp.id];
+    aoa.push([cp.cat, cp.id, cp.name, c['陸軍'], c['海軍'], c['空軍'], c['其他'], results[cp.id].length, stage2Text(cp.id)]);
+  }
+  return aoa;
+}
+function buildAllAOA() {
+  var aoa = [outHeaders()];
+  for (var i = 0; i < CONTROL_POINTS.length; i++) {
+    var id = CONTROL_POINTS[i].id;
+    for (var r = 0; r < results[id].length; r++) aoa.push(outRowValues(id, r));
+  }
+  return aoa;
+}
+function buildDetailAOA(id) {
+  var cp = getCP(id);
+  var aoa = [['控制點' + cp.id + '：' + cp.name]];   // 第 1 列標題（列印辨識用）
+  aoa.push(outHeaders());
+  for (var r = 0; r < results[id].length; r++) aoa.push(outRowValues(id, r));
+  return aoa;
+}
+function detailFilename(id) {
+  var cp = getCP(id);
+  return sanitizeFilename(todayStr() + cp.cat + cp.id + cp.name) + '.xlsx';
+}
+function downloadAOA(aoa, sheetName, fileName) {
+  var ws = XLSX.utils.aoa_to_sheet(aoa);
+  var wb = XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(wb, ws, sheetName);
+  XLSX.writeFile(wb, fileName);
+}
+document.getElementById('btn-dl-summary').addEventListener('click', function () {
+  if (!counts) return;
+  downloadAOA(buildSummaryAOA(), '分析總表', todayStr() + '軍購案分析總表.xlsx');
+});
+document.getElementById('btn-dl-all').addEventListener('click', function () {
+  if (!results) return;
+  downloadAOA(buildAllAOA(), '全部分析結果', todayStr() + '全部分析結果明細表.xlsx');
+});
+document.getElementById('btn-dl-detail').addEventListener('click', function () {
+  if (!results || !currentDetailId) return;
+  var cp = getCP(currentDetailId);
+  downloadAOA(buildDetailAOA(currentDetailId), cp.cat + cp.id, detailFilename(currentDetailId));
+});
+
+/* ========== 第二階段：會議資料上傳與核對 ========== */
+var mtgUploadArea = document.getElementById('mtg-upload-area');
+var mtgFileInput = document.getElementById('mtg-file-input');
+mtgUploadArea.addEventListener('click', function () { mtgFileInput.click(); });
+mtgUploadArea.addEventListener('dragover', function (e) { e.preventDefault(); mtgUploadArea.classList.add('drag'); });
+mtgUploadArea.addEventListener('dragleave', function () { mtgUploadArea.classList.remove('drag'); });
+mtgUploadArea.addEventListener('drop', function (e) {
+  e.preventDefault(); mtgUploadArea.classList.remove('drag');
+  readMeetingFiles(e.dataTransfer.files);
+});
+mtgFileInput.addEventListener('change', function () {
+  readMeetingFiles(mtgFileInput.files);
+  mtgFileInput.value = '';   // 允許重選同名檔案
+});
+
+function readMeetingFiles(fileList) {
+  for (var i = 0; i < fileList.length; i++) {
+    (function (file) {
+      var reader = new FileReader();
+      reader.onload = function (e) {
+        try { parseMeetingWorkbook(e.target.result, file.name); }
+        catch (err) { alert('會議資料「' + file.name + '」讀取失敗：' + err.message); }
+      };
+      reader.readAsArrayBuffer(file);
+    })(fileList[i]);
+  }
+}
+
+// 獨立可呼叫（供驗證）：解析一個會議資料檔並加入清單
+function parseMeetingWorkbook(arrayBuffer, fileName) {
+  var wb = XLSX.read(arrayBuffer, { type: 'array' });
+  var ws = wb.Sheets[wb.SheetNames[0]];   // 僅讀第一個工作表
+  var rows = XLSX.utils.sheet_to_json(ws, { header: 1, defval: '' });
+  if (!rows.length) { alert('會議資料「' + fileName + '」內沒有資料'); return; }
+  var header = rows[0];
+  var badCols = [];
+  for (var i = 0; i < MTG_HEADERS.length; i++)
+    if (normHeader(header[i]) !== normHeader(MTG_HEADERS[i])) badCols.push(i);
+  var data = rows.slice(1).filter(function (r) {
+    return r.some(function (c) { return c !== '' && c !== null && c !== undefined; });
+  }).map(function (r) { return [r[0], r[1], r[2], r[3]]; });
+  meetingFiles.push({ name: fileName || ('檔案' + (meetingFiles.length + 1)), rows: data, badCols: badCols });
+  onMeetingFilesChanged();
+}
+
+function removeMeetingFile(idx) {
+  meetingFiles.splice(idx, 1);
+  onMeetingFilesChanged();
+}
+
+// 會議檔清單變動後：更新清單與預覽；若已核對過則自動重新核對（或於清空時重置）
+function onMeetingFilesChanged() {
+  var wasDone = stage2Done;
+  if (!meetingFiles.length) { resetStage2(); }
+  else if (wasDone) { applyStage2(); }
+  renderMeetingUI();
+  if (results) renderSummary();
+}
+
+function renderMeetingUI() {
+  // 檔案清單
+  var listHtml = '';
+  var totalRows = 0;
+  for (var f = 0; f < meetingFiles.length; f++) {
+    var mf = meetingFiles[f];
+    totalRows += mf.rows.length;
+    listHtml += '<div class="file-item"><span class="fname">📄 ' + esc(mf.name) + '</span>' +
+      '<span class="fmeta">' + mf.rows.length + ' 筆</span>';
+    if (mf.badCols.length) {
+      var badNames = [];
+      for (var b = 0; b < mf.badCols.length; b++)
+        badNames.push(colLetter(mf.badCols[b]) + ' 欄應為「' + MTG_HEADERS[mf.badCols[b]] + '」');
+      listHtml += '<span class="fbad">🛑 欄位不符：' + esc(badNames.join('、')) + '</span>';
+    }
+    listHtml += '<button class="btn-remove" data-idx="' + f + '">移除</button></div>';
+  }
+  var listEl = document.getElementById('mtg-file-list');
+  listEl.innerHTML = listHtml;
+  var rmBtns = listEl.querySelectorAll('button[data-idx]');
+  for (var r = 0; r < rmBtns.length; r++) {
+    rmBtns[r].addEventListener('click', function () { removeMeetingFile(parseInt(this.getAttribute('data-idx'), 10)); });
+  }
+
+  // 預覽（合併表格）
+  var block = document.getElementById('mtg-preview-block');
+  if (!meetingFiles.length) {
+    block.classList.add('hidden');
+    document.getElementById('stage2-result-msg').innerHTML = '';
+    return;
+  }
+  block.classList.remove('hidden');
+  var html = '<table><thead><tr><th>來源檔案</th><th>檢討態樣</th><th>案號</th><th>案名</th><th>說明或辦理情形</th></tr></thead><tbody>';
+  for (var i = 0; i < meetingFiles.length; i++) {
+    var rows = meetingFiles[i].rows;
+    for (var j = 0; j < rows.length; j++) {
+      html += '<tr><td>' + esc(meetingFiles[i].name) + '</td>' +
+        '<td class="wrapcell">' + esc(rows[j][0]) + '</td>' +
+        '<td>' + esc(rows[j][1]) + '</td>' +
+        '<td class="wrapcell">' + esc(rows[j][2]) + '</td>' +
+        '<td class="wrapcell">' + esc(rows[j][3]) + '</td></tr>';
+    }
+  }
+  html += '</tbody></table>';
+  document.getElementById('mtg-preview-wrap').innerHTML = html;
+  document.getElementById('mtg-preview-count').textContent =
+    '共 ' + meetingFiles.length + ' 個檔案、' + totalRows + ' 筆會議紀錄';
+}
+
+// 建立 案號 → [{t:檢討態樣, s:說明}] 索引（完全相同的重複列去重）
+function buildMeetingIndex() {
+  var index = {};
+  var seen = {};
+  for (var f = 0; f < meetingFiles.length; f++) {
+    var rows = meetingFiles[f].rows;
+    for (var j = 0; j < rows.length; j++) {
+      var caseNo = normCaseNo(rows[j][1]);
+      if (!caseNo) continue;
+      var t = String(rows[j][0] === undefined || rows[j][0] === null ? '' : rows[j][0]).trim();
+      var s = String(rows[j][3] === undefined || rows[j][3] === null ? '' : rows[j][3]).trim();
+      var key = caseNo + '' + t + '' + s;
+      if (seen[key]) continue;
+      seen[key] = true;
+      if (!index[caseNo]) index[caseNo] = [];
+      index[caseNo].push({ t: t, s: s });
+    }
+  }
+  return index;
+}
+
+// 多筆合併：單筆不編號；多筆「1. …\n2. …」，態樣與說明同步編號對應
+function mergeEntries(entries, key) {
+  if (entries.length === 1) return entries[0][key];
+  var out = [];
+  for (var i = 0; i < entries.length; i++) out.push((i + 1) + '. ' + entries[i][key]);
+  return out.join('\n');
+}
+
+function applyStage2() {
+  if (!results) return;
+  var index = buildMeetingIndex();
+  stage2Counts = {};
+  var matchedRows = 0, totalRows = 0;
+  for (var i = 0; i < CONTROL_POINTS.length; i++) {
+    var id = CONTROL_POINTS[i].id;
+    var rows = results[id];
+    var n = 0;
+    for (var r = 0; r < rows.length; r++) {
+      var entries = index[normCaseNo(rows[r][2])];   // 輸出列索引 2＝案號
+      if (entries && entries.length) {
+        rows[r][18] = mergeEntries(entries, 't');
+        rows[r][19] = mergeEntries(entries, 's');
+        n++;
+      } else {
+        rows[r][18] = '';
+        rows[r][19] = '';
+      }
+    }
+    stage2Counts[id] = n;
+    matchedRows += n;
+    totalRows += rows.length;
+  }
+  stage2Done = true;
+  document.getElementById('stage2-result-msg').innerHTML =
+    '<div class="alert alert-ok">✓ 核對完成：' + meetingFiles.length + ' 個會議資料檔，第一階段 ' +
+    totalRows + ' 筆分析結果中有 <b>' + matchedRows + '</b> 筆出現於會議資料。' +
+    '分析總表「第二階段」欄與各明細表（含下載檔）已更新。</div>';
+}
+
+// 移除全部會議檔後重置：明細列裁回 18 欄
+function resetStage2() {
+  stage2Done = false;
+  stage2Counts = null;
+  if (results) {
+    for (var i = 0; i < CONTROL_POINTS.length; i++) {
+      var rows = results[CONTROL_POINTS[i].id];
+      for (var r = 0; r < rows.length; r++) rows[r].length = 18;
+    }
+  }
+}
+
+document.getElementById('btn-run-stage2').addEventListener('click', function () {
+  if (!results) { alert('請先執行第一階段分析'); return; }
+  if (!meetingFiles.length) { alert('請先上傳會議資料檔案'); return; }
+  var badFiles = [];
+  for (var f = 0; f < meetingFiles.length; f++)
+    if (meetingFiles[f].badCols.length) badFiles.push(meetingFiles[f].name);
+  if (badFiles.length &&
+      !confirm('下列檔案的欄位名稱與預期不符：\n\n  ' + badFiles.join('\n  ') +
+        '\n\n系統仍會依「欄位位置」（A=檢討態樣、B=案號、C=案名、D=說明）核對。\n確定要繼續嗎？')) return;
+  applyStage2();
+  renderSummary();
+});
+
+/* ========== 風險評分：執行、排名、匯出 ========== */
+function runScoring() {
+  if (!results) { alert('請先執行第一階段分析'); return; }
+  caseScores = [];
+  for (var r = 0; r < dataRows.length; r++) caseScores[r] = { exec: 0, fin: 0, total: 0, perDim: {} };
+  // 命中集合直接取自第一階段 results（與分析門檻一致，不重跑 hit）
+  for (var i = 0; i < CONTROL_POINTS.length; i++) {
+    var id = CONTROL_POINTS[i].id;
+    var dimId = dimIdForCP(id);
+    if (dimId === null) continue;                 // 軍投 1-10：併入，不計分
+    var dim = SCORE_DIM_BY_ID[dimId];
+    var meta = resultsMeta[id];
+    for (var k = 0; k < meta.length; k++) {
+      var ri = meta[k];
+      if (caseScores[ri].perDim.hasOwnProperty(dimId)) continue;   // 同維度只計一次
+      var s = scoreOf(dim, calcVals(dataRows[ri]));
+      caseScores[ri].perDim[dimId] = s;
+      if (dim.risk === '執行') caseScores[ri].exec += s; else caseScores[ri].fin += s;
+    }
+  }
+  for (var r2 = 0; r2 < dataRows.length; r2++) caseScores[r2].total = caseScores[r2].exec + caseScores[r2].fin;
+  scoreDone = true;
+  renderScore();
+  // 若正停留在明細頁才刷新其評分欄（避免用舊的 currentDetailId 誤跳頁）
+  if (currentDetailId && !document.getElementById('detail-view').classList.contains('hidden')) showDetail(currentDetailId);
+}
+document.getElementById('btn-run-score').addEventListener('click', runScoring);
+
+// 依類別取排名列（軍投＝非作維，含特別預算；作維＝作維），依風險總分遞減
+function caseRankRows(zw) {
+  var arr = [];
+  for (var r = 0; r < dataRows.length; r++) {
+    if (isZuoWei(dataRows[r]) !== zw) continue;
+    arr.push({ ri: r, cs: caseScores[r] });
+  }
+  arr.sort(function (a, b) { return b.cs.total - a.cs.total; });
+  return arr;
+}
+function rankTableHTML(zw, title) {
+  var arr = caseRankRows(zw);
+  var shown = rankShowAll ? arr : arr.filter(function (x) { return x.cs.total > 0; });
+  var html = '<h3 style="font-size:16px;color:#1f4e79;margin:14px 0 8px;">' + esc(title) + '</h3>';
+  html += '<div class="table-wrap" style="max-height:none;"><table><thead><tr>' +
+    '<th style="width:56px;">排名</th><th>案號</th><th>案名</th><th style="width:120px;">軍種</th>' +
+    '<th style="width:84px;">執行風險</th><th style="width:84px;">財務風險</th><th style="width:84px;">風險總分</th>' +
+    '<th style="width:150px;">發價值(美元)</th></tr></thead><tbody>';
+  if (!shown.length) html += '<tr><td class="ctr" colspan="8">（無案件）</td></tr>';
+  for (var i = 0; i < shown.length; i++) {
+    var r = shown[i].ri, cs = shown[i].cs;
+    html += '<tr><td class="ctr">' + (i + 1) + '</td>' +
+      '<td>' + esc(dataRows[r][1]) + '</td><td>' + esc(dataRows[r][4]) + '</td>' +
+      '<td class="ctr">' + esc(dataRows[r][2]) + '</td>' +
+      '<td class="num">' + cs.exec.toFixed(2) + '</td><td class="num">' + cs.fin.toFixed(2) + '</td>' +
+      '<td class="num"><b>' + cs.total.toFixed(2) + '</b></td>' +
+      '<td class="num">' + esc(fmtMoney(num(dataRows[r][7]))) + '</td></tr>';
+  }
+  html += '</tbody></table></div>';
+  return html;
+}
+function renderScore() {
+  if (!scoreDone) return;
+  document.getElementById('score-result').classList.remove('hidden');
+  var scored = 0;
+  for (var r = 0; r < dataRows.length; r++) if (caseScores[r].total > 0) scored++;
+  var unscored = dataRows.length - scored;
+  document.getElementById('score-count').innerHTML =
+    '已為全部 ' + dataRows.length + ' 案評分：有風險分數 <b>' + scored + '</b> 案；' +
+    '未命中任何控制點（風險總分 0）<b>' + unscored + '</b> 案' +
+    (rankShowAll ? '（下表已含全部案件）' : '（下表僅列有分數者）') + '。';
+  document.getElementById('rank-juntou').innerHTML = rankTableHTML(false, '軍事投資建案（軍投，含特別預算）風險排名');
+  document.getElementById('rank-zuowei').innerHTML = rankTableHTML(true, '作業維持案（作維）風險排名');
+}
+document.getElementById('btn-rank-toggle').addEventListener('click', function () {
+  rankShowAll = !rankShowAll;
+  this.textContent = rankShowAll ? '只顯示有分數案件' : '顯示全部案件（含 0 分）';
+  renderScore();
+});
+
+// 匯出：案件評分明細（全部案件）
+function buildScoreDetailAOA() {
+  var aoa = [['案號', '案名', '軍種', '類別', '執行風險分數', '財務風險分數', '風險總分', '發價值(美元)', '命中維度及分數']];
+  for (var r = 0; r < dataRows.length; r++) {
+    var cs = caseScores[r];
+    var dims = [];
+    for (var di = 0; di < SCORE_DIMS.length; di++) {
+      var d = SCORE_DIMS[di].id;
+      if (cs.perDim.hasOwnProperty(d)) dims.push(d + ':' + cs.perDim[d].toFixed(2));
+    }
+    aoa.push([dataRows[r][1], dataRows[r][4], dataRows[r][2], dataRows[r][5],
+      +cs.exec.toFixed(2), +cs.fin.toFixed(2), +cs.total.toFixed(2), num(dataRows[r][7]), dims.join('; ')]);
+  }
+  return aoa;
+}
+// 匯出：單一類別風險排名（含全部案件，依總分排序）
+function buildRankAOA(zw) {
+  var arr = caseRankRows(zw);
+  var aoa = [['排名', '案號', '案名', '軍種', '執行風險分數', '財務風險分數', '風險總分', '發價值(美元)']];
+  for (var i = 0; i < arr.length; i++) {
+    var r = arr[i].ri, cs = arr[i].cs;
+    aoa.push([i + 1, dataRows[r][1], dataRows[r][4], dataRows[r][2],
+      +cs.exec.toFixed(2), +cs.fin.toFixed(2), +cs.total.toFixed(2), num(dataRows[r][7])]);
+  }
+  return aoa;
+}
+document.getElementById('btn-dl-score').addEventListener('click', function () {
+  if (!scoreDone) return;
+  downloadAOA(buildScoreDetailAOA(), '案件評分明細', todayStr() + '軍購案評分明細.xlsx');
+});
+document.getElementById('btn-dl-rank-jt').addEventListener('click', function () {
+  if (!scoreDone) return;
+  downloadAOA(buildRankAOA(false), '軍投風險排名', todayStr() + '軍投風險排名.xlsx');
+});
+document.getElementById('btn-dl-rank-zw').addEventListener('click', function () {
+  if (!scoreDone) return;
+  downloadAOA(buildRankAOA(true), '作維風險排名', todayStr() + '作維風險排名.xlsx');
+});
+</script>
+</body>
+</html>
