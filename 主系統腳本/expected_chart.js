@@ -90,8 +90,9 @@ const cases = dataRows.map((row, idx) => {
     const sc = DIM[did].score(v); perDim[did] = sc;
     if (DIM[did].risk === '執行') exec += sc; else fin += sc;
   }
+  // execRaw/finRaw：未四捨五入，供繪圖座標比對（HTML 泡泡以原始累加分數定位，非 2dp）
   return { idx, caseNo: row[1], zw, exec: +exec.toFixed(2), fin: +fin.toFixed(2),
-    total: +(exec + fin).toFixed(2), H: num(row[7]) };
+    execRaw: exec, finRaw: fin, total: +(exec + fin).toFixed(2), H: num(row[7]) };
 });
 
 // ---- 繪圖幾何（須與 HTML 的 CH/chartX/chartY/bubbleR/zoneOf 一致）----
@@ -117,7 +118,7 @@ const zw = report(true, '作維');
 
 function spot(no) {
   const c = cases.find(x => x.caseNo === no);
-  console.log(`${no}: (exec ${c.exec}, fin ${c.fin}) → cx ${chartX(c.exec).toFixed(1)}, cy ${chartY(c.fin).toFixed(1)}, r ${bubbleR(c.H).toFixed(1)}, zone ${zoneOf(c.total)}`);
+  console.log(`${no}: (exec ${c.exec}, fin ${c.fin}) → cx ${chartX(c.execRaw).toFixed(1)}, cy ${chartY(c.finRaw).toFixed(1)}, r ${bubbleR(c.H).toFixed(1)}, zone ${zoneOf(c.total)}`);
 }
 console.log('\n=== 座標/半徑抽驗 ===');
 spot('TWMYUY'); spot('TWBKQK'); spot('TWPJLD');
@@ -126,7 +127,7 @@ spot('TWMYUY'); spot('TWBKQK'); spot('TWPJLD');
 const out = {};
 [[false, 'jt'], [true, 'zw']].forEach(([z, k]) => {
   out[k] = cases.filter(c => c.zw === z && c.total > 0).map(c => ({
-    i: c.idx, cx: +chartX(c.exec).toFixed(1), cy: +chartY(c.fin).toFixed(1), r: +bubbleR(c.H).toFixed(1)
+    i: c.idx, cx: +chartX(c.execRaw).toFixed(1), cy: +chartY(c.finRaw).toFixed(1), r: +bubbleR(c.H).toFixed(1)
   }));
 });
 fs.writeFileSync(path.join(__dirname, 'expected_chart.json'), JSON.stringify(out));
