@@ -1,13 +1,14 @@
 # 主系統（國軍軍購案分析系統）的維護主檔與驗證腳本
 
-產生主系統成品（專案根目錄，內嵌 SheetJS 0.18.5）的模板與獨立驗證腳本。**現行版為 `國軍軍購案分析系統v1150719.html`（約 953KB）**。
+產生主系統成品（專案根目錄，內嵌 SheetJS 0.18.5）的模板與獨立驗證腳本。**現行版為 `國軍軍購案分析系統v1150720.html`（約 960KB）**。
 
 ## 檔案
 
 | 檔案 | 說明 |
 |---|---|
-| `template_v1150719.html` | **現行維護主檔**。含 `<!--SHEETJS_PLACEHOLDER-->`，未內嵌 SheetJS（約 84KB，可直接編輯）。自 v1150718 template 複製後加：氣泡圖**框選縮放**（視域參數化＋重繪）、前 10 名標籤**防重疊＋引線**、圖例加「美元」、小卡/tooltip **右緣不裁切**＋顯示**評分排名** |
-| `template_v1150718.html` | 前一版維護主檔（風險分布氣泡圖第 4、5 步），保留 |
+| `template_v1150720.html` | **現行維護主檔**。含 `<!--SHEETJS_PLACEHOLDER-->`，未內嵌 SheetJS（約 85KB，可直接編輯）。自 v1150719 template 複製後：用語「維度」→「**評分項目**」、小卡長名稱換行修復（`white-space:normal`）、氣泡圖縮放加 **+/− 按鈕與滾輪**（保留框選）、縮放時加**迷你全圖定位示意圖** |
+| `template_v1150719.html` | 前一版維護主檔（框選縮放、標籤防重疊、小卡/tooltip 修復、排名），保留 |
+| `template_v1150718.html` | 更前一版維護主檔（風險分布氣泡圖第 4、5 步），保留 |
 | `template_v1150717.html` | 更前一版維護主檔（評分模組第 1~3 步），保留 |
 | `expected_score.js` | 風險**評分**的預期答案腳本（每案 exec/fin/total）。**與 HTML 獨立實作** |
 | `expected_chart.js` | 風險分布圖**幾何**的預期答案腳本（每案泡泡座標/半徑、分區、前 10 名、泡泡數）。**與 HTML 獨立實作**，重用評分核心。**v1150719 起以未四捨五入的 execRaw/finRaw 定位**（HTML 泡泡以原始累加分數繪製；先前用 2dp 會與 HTML 差 ±0.1px） |
@@ -20,14 +21,14 @@ v1150715（含）以前的主系統只有內嵌成品，**沒有**未內嵌的�
 - 抽出的 `xlsx.full.min.js`（約 639KB）另存，區塊換成 `<script><!--SHEETJS_PLACEHOLDER--></script>`。
 - 驗證：template 位元組 ＝ 原檔 − SheetJS ＋ placeholder；重新內嵌後與原檔逐位元組相同（1150717 已驗證往返一致）。
 
-## 要改主系統就改現行 template，不要改根目錄那個 953KB 的檔
+## 要改主系統就改現行 template，不要改根目錄那個 960KB 的檔
 
-改完 `template_v1150719.html` 後，用 PowerShell 把 SheetJS 內嵌回去（**不可用 CDN**，目標環境無網路）：
+改完 `template_v1150720.html` 後，用 PowerShell 把 SheetJS 內嵌回去（**不可用 CDN**，目標環境無網路）：
 
 ```powershell
 $sp  = "<放 xlsx.full.min.js 的路徑>"   # 本目錄即有一份；亦可從任一已建置 HTML 抽出
-$tpl = "主系統腳本\template_v1150719.html"
-$out = "國軍軍購案分析系統v1150719.html"
+$tpl = "主系統腳本\template_v1150720.html"
+$out = "國軍軍購案分析系統v1150720.html"
 $t = [System.IO.File]::ReadAllText($tpl, [System.Text.Encoding]::UTF8)
 $j = [System.IO.File]::ReadAllText((Join-Path $sp "xlsx.full.min.js"), [System.Text.Encoding]::UTF8)
 $t = $t.Replace("<!--SHEETJS_PLACEHOLDER-->", $j)
@@ -71,6 +72,15 @@ node expected_chart.js     # 圖幾何：每案泡泡座標/半徑、分區、�
 - **小卡/tooltip**：`table-layout:fixed`＋視窗夾取，貼右緣時「分數」欄完整、卡不出視窗（桌面 1265px 與窄視窗皆通過）；tooltip 貼右緣翻轉；兩者均顯示「軍投／作維第 N 名／共 M 案」（與排名表同源）
 - **匯出／列印**：縮放狀態下 PNG/SVG/列印皆出 0~40 全圖；列印前暫存縮放→重繪全圖→`afterprint` 還原（不劫持 Ctrl+P）
 - **回歸**：評分數字（172 案、加總 1466.09、TWMYUY 27.50、TWBKQK 35.43）、全圖泡泡座標與 v1150718 完全相同；console 無錯
+
+### v1150720 新增功能驗收（演示檔，瀏覽器實測通過）
+
+- **用語**：全圖無殘留「維度」；軸標題「…相關評分項目加總」、小卡表頭「命中評分項目」、註記「其餘 N 個評分項目」、匯出表頭「命中評分項目及分數」
+- **小卡不溢出**：首欄 `white-space` 電腦樣式為 `normal`；長評分項目名換行、`nameCell.right ≤ catCell.left`（文字不蓋隔欄）、分數欄在卡內
+- **縮放**：`[＋]` 由全圖→6.7~33.3（置中、正方形）、`[−]` 放大、滾輪 40→32（游標錨定、正方形）；**框選仍作用**（框 2~12 得 2~12）；迷你全圖藍框位置＝`pad+(x0/40)*plot`（assert 一致）、縮放時才出現、全圖時消失
+- **匯出／列印**：縮放狀態下仍出 0~40 全圖且不含工具列（`buildChartSVG(FULL_VIEW)`）；列印 `body.print-charts .chart-toolbar{display:none}`、印前重繪全圖、`afterprint` 還原縮放
+- **回歸**：全圖泡泡座標與評分數字與 v1150719 逐案 **0 誤差**；console 無錯
+- **主圖 svg 取用**：因工具列插在圖前，一律 `box.querySelector(':scope > svg')`（勿用 `querySelector('svg')`，會抓到迷你全圖）
 
 ## 評分機制的來源
 
